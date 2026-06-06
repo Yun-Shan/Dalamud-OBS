@@ -338,3 +338,13 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Claude Code / Superpowers agent work directories
+.superpowers/
+.remember/
+
+# Generated specs
+docs/superpowers/specs/
+
+# .NET SDK projects (Central Package Management doesn't need lock files)
+packages.lock.json
