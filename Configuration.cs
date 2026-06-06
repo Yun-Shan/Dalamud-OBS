@@ -46,6 +46,8 @@ namespace OBSPlugin
         public bool CancelStopRecordOnResume = true;
         public int StopRecordOnCombatDelay = 5;
         public bool DontStopInCutscene = true;
+        // Debug settings
+        public bool EnableDebug = false;
         public bool ResetReplayBufferDirByTerritory = false;
         public bool SaveReplayBufferOnCombat = false;
         public int SaveReplayBufferOnCombatDelay = 0;

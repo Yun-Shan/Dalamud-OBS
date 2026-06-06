@@ -28,12 +28,79 @@ namespace OBSPlugin
         private int UIErrorCount = 0;
         Blur[] PartyMemberBlurList = new Blur[8];
 
+        private string lastDutyEvent = "";
+        private DateTime lastDutyEventTime = DateTime.MinValue;
+        private OrderedDictionary<string, OrderedDictionary<string, List<string>>> debugDutyTree = new();
+        private bool debugDutyTreeCached = false;
+
         public bool IsVisible { get; set; }
         public PluginUI(Plugin plugin)
         {
             Plugin = plugin;
             InitAddConsuming();
             InitRemoveConsuming();
+            InitDutyEventHandlers();
+        }
+
+        private void InitDutyEventHandlers()
+        {
+            var dutyState = Plugin.DutyState;
+            dutyState.DutyStarted += _ =>
+            {
+                lastDutyEvent = "副本已开始";
+                lastDutyEventTime = DateTime.Now;
+            };
+            dutyState.DutyWiped += _ =>
+            {
+                lastDutyEvent = "副本已灭团";
+                lastDutyEventTime = DateTime.Now;
+            };
+            dutyState.DutyRecommenced += _ =>
+            {
+                lastDutyEvent = "副本已重开";
+                lastDutyEventTime = DateTime.Now;
+            };
+            dutyState.DutyCompleted += _ =>
+            {
+                lastDutyEvent = "副本已完成";
+                lastDutyEventTime = DateTime.Now;
+            };
+        }
+
+        private void CacheDutyTree()
+        {
+            if (debugDutyTreeCached) return;
+            debugDutyTree.Clear();
+
+            var sheet = Plugin.Data.GetExcelSheet<ContentFinderCondition>();
+            if (sheet == null) return;
+
+            var sortedRows = sheet
+                .OrderBy(row => row.ContentType.Value.RowId)
+                .ThenBy(row => row.ContentUICategory.Value.RowId)
+                .ThenBy(row => row.RowId);
+
+            foreach (var row in sortedRows)
+            {
+                var contentType = string.IsNullOrEmpty(row.ContentType.Value.Name.ToString()) ? "未知" : row.ContentType.Value.Name.ToString();
+                var uiCategory = string.IsNullOrEmpty(row.ContentUICategory.Value.Name.ToString()) ? "未知" : row.ContentUICategory.Value.Name.ToString();
+                var name = string.IsNullOrEmpty(row.Name.ToString()) ? "未知" : row.Name.ToString();
+
+                if (!debugDutyTree.ContainsKey(contentType))
+                    debugDutyTree[contentType] = new OrderedDictionary<string, List<string>>();
+
+                var uiCategoryDict = (OrderedDictionary<string, List<string>>)debugDutyTree[contentType]!;
+
+                if (!uiCategoryDict.ContainsKey(uiCategory))
+                    uiCategoryDict[uiCategory] = new List<string>();
+
+                var nameList = uiCategoryDict[uiCategory]!;
+
+                if (!nameList.Contains(name))
+                    nameList.Add(name);
+            }
+
+            debugDutyTreeCached = true;
         }
 
         private void InitAddConsuming()
@@ -162,6 +229,15 @@ namespace OBSPlugin
                         if (ImGui.BeginChild("Blur##SettingsRegion"))
                         {
                             DrawAbout();
+                            ImGui.EndChild();
+                        }
+                        ImGui.EndTabItem();
+                    }
+                    if (ImGui.BeginTabItem("调试##Tab"))
+                    {
+                        if (ImGui.BeginChild("Debug##SettingsRegion"))
+                        {
+                            DrawDebug();
                             ImGui.EndChild();
                         }
                         ImGui.EndTabItem();
@@ -1237,6 +1313,85 @@ namespace OBSPlugin
 
 
 
+        }
+
+        private void DrawDebug()
+        {
+            if (ImGui.Checkbox("启用调试", ref Config.EnableDebug))
+            {
+                Config.Save();
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("调试总开关。");
+
+            if (!Config.EnableDebug)
+            {
+                ImGui.EndChild();
+                return;
+            }
+
+            CacheDutyTree();
+
+            ImGui.Separator();
+
+            var dutyState = Plugin.DutyState;
+            ImGui.Text($"副本已开始：{dutyState.IsDutyStarted}");
+
+            var cfc = dutyState.ContentFinderCondition;
+            if (cfc.IsValid)
+            {
+                ImGui.Text($"副本类型：{cfc.Value.ContentType.Value.Name}");
+                ImGui.Text($"副本界面分类：{cfc.Value.ContentUICategory.Value.Name}");
+                ImGui.Text($"副本名称：{cfc.Value.Name}");
+            }
+            else
+            {
+                ImGui.Text("副本内容：无效");
+            }
+
+            ImGui.Separator();
+
+            var elapsed = DateTime.Now - lastDutyEventTime;
+            if (elapsed.TotalSeconds < 5 && !string.IsNullOrEmpty(lastDutyEvent))
+            {
+                ImGui.Text($"{lastDutyEvent} (已过 {elapsed.TotalSeconds:F1} 秒)");
+            }
+            else
+            {
+                lastDutyEvent = "";
+            }
+
+            ImGui.Separator();
+
+            foreach (var contentType in debugDutyTree)
+            {
+                if (ImGui.TreeNode(contentType.Key))
+                {
+                    var onlyUnknownCategory = contentType.Value.Count == 1 && contentType.Value.ContainsKey("未知");
+                    if (onlyUnknownCategory)
+                    {
+                        foreach (var name in contentType.Value["未知"])
+                        {
+                            ImGui.Text(name);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var uiCategory in contentType.Value)
+                        {
+                            if (ImGui.TreeNode(uiCategory.Key))
+                            {
+                                foreach (var name in uiCategory.Value)
+                                {
+                                    ImGui.Text(name);
+                                }
+                                ImGui.TreePop();
+                            }
+                        }
+                    }
+                    ImGui.TreePop();
+                }
+            }
         }
 
         private void DrawStream()

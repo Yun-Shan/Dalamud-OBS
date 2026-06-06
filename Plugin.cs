@@ -7,7 +7,9 @@ using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Common.Lua;
+using Lumina.Excel.Sheets;
 using OBSPlugin.Attributes;
 using OBSPlugin.Objects;
 using OBSWebsocketDotNet;
@@ -28,6 +30,10 @@ namespace OBSPlugin
         internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
         [PluginService]
         internal static IPluginLog PluginLog { get; private set; } = null!;
+        [PluginService]
+        internal static IDutyState DutyState { get; private set; } = null!;
+        [PluginService]
+        internal static IDataManager DataManager { get; private set; } = null!;
 
         // Instance services (injected via constructor)
         internal ICommandManager Commands { get; }
