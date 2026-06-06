@@ -1,14 +1,19 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
+using OBSPlugin.Services;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace OBSPlugin
 {
     public class RecordTab
     {
+        private static OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> _dutyTree;
+        private static Dictionary<string, (int StartIndex, int Count)> _bitRanges;
+
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
         private readonly IPluginLog _log;
@@ -24,8 +29,56 @@ namespace OBSPlugin
             _setRecordingDir = setRecordingDir;
         }
 
+        public static void Initialize(IDataManager data)
+        {
+            if (_dutyTree != null) return;
+
+            _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(data);
+            _bitRanges = new Dictionary<string, (int, int)>();
+
+            int index = 0;
+            foreach (var l1 in _dutyTree)
+            {
+                foreach (var l2 in l1.Value)
+                {
+                    _bitRanges[$"{l1.Key}/{l2.Key}"] = (index, l2.Value.Count);
+                    index += l2.Value.Count;
+                }
+            }
+        }
+
+        private Configuration.TriState GetL2State(string l1Key, string l2Key)
+        {
+            if (!_bitRanges.TryGetValue($"{l1Key}/{l2Key}", out var range)) return Configuration.TriState.Unchecked;
+            int count = _config.SelectedContents.CountRange(range.StartIndex, range.Count);
+            if (count == 0) return Configuration.TriState.Unchecked;
+            if (count == range.Count) return Configuration.TriState.Checked;
+            return Configuration.TriState.Indeterminate;
+        }
+
+        private Configuration.TriState GetL1State(string l1Key)
+        {
+            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return Configuration.TriState.Unchecked;
+
+            bool hasChecked = false;
+            bool hasUnchecked = false;
+
+            foreach (var l2 in l2Dict)
+            {
+                var state = GetL2State(l1Key, l2.Key);
+                if (state == Configuration.TriState.Checked) hasChecked = true;
+                if (state == Configuration.TriState.Unchecked) hasUnchecked = true;
+                if (hasChecked && hasUnchecked) return Configuration.TriState.Indeterminate;
+            }
+
+            if (hasChecked && !hasUnchecked) return Configuration.TriState.Checked;
+            if (!hasChecked && hasUnchecked) return Configuration.TriState.Unchecked;
+            return Configuration.TriState.Indeterminate;
+        }
+
         public void Draw()
         {
+            // Recording control button + status
             string obsButtonText;
 
             switch (_obsConnection.ObsRecordStatus)
@@ -73,106 +126,130 @@ namespace OBSPlugin
             ImGui.TextColored(_obsConnection.ObsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1),
                 _obsConnection.ObsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "录制中" : "已停止");
 
-            if (ImGui.InputText("录制目录", ref _config.RecordDir, 256, ImGuiInputTextFlags.EnterReturnsTrue))
-            {
-                _config.Save();
-                if (_obsConnection.Connected)
-                {
-                    _obsConnection.OBS.SetRecordDirectory(_config.RecordDir);
-                    _log.Information("Recording directory set to {0}", _config.RecordDir);
-                }
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("按回车保存");
-            if (_config.UseDutyName)
-            {
-                ImGui.BeginDisabled();
-            }
-            if (ImGui.Checkbox("区域作为子文件夹", ref _config.IncludeTerritory))
-            {
-                _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，录制将保存到以当前区域名命名的子文件夹。");
-            if (_config.UseDutyName)
-            {
-                ImGui.EndDisabled();
-            }
-            ImGui.SameLine(ImGui.GetColumnWidth() - 400);
-            if (ImGui.Checkbox("副本名称作为子文件夹", ref _config.UseDutyName))
-            {
-                if (_config.UseDutyName)
-                {
-                    _config.IncludeTerritory = true;
-                }
-                _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果在副本中，使用副本名称代替区域名作为子文件夹。");
+            DrawRecordingFileGroup();
+            DrawAutoRecordTriggerGroup();
+            DrawAutoStopRecordGroup();
+        }
 
-            if (ImGui.Checkbox("区域作为后缀", ref _config.ZoneAsSuffix))
+        private void DrawRecordingFileGroup()
+        {
+            ImGui.TextColored(new Vector4(0.54f, 0.71f, 0.97f, 1f), "录制文件");
+
+            // 子文件夹
+            ImGui.Text("子文件夹");
+            ImGui.SameLine(100);
+            if (ImGui.BeginCombo("##SubFolderMode", _config.SubFolderMode.ToString()))
             {
-                _config.Save();
+                foreach (Configuration.SubFolderModeType mode in Enum.GetValues<Configuration.SubFolderModeType>())
+                {
+                    if (ImGui.Selectable(mode.ToString(), _config.SubFolderMode == mode))
+                    {
+                        _config.SubFolderMode = mode;
+                        _config.Save();
+                    }
+                }
+                ImGui.EndCombo();
             }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，将以当前区域名作为录制文件的后缀。");
+
+            // 文件名
+            ImGui.Text("文件名");
+            ImGui.SameLine(100);
+            if (ImGui.BeginCombo("##FileNameMode", _config.FileNameMode.ToString()))
+            {
+                foreach (Configuration.FileNameModeType mode in Enum.GetValues<Configuration.FileNameModeType>())
+                {
+                    if (ImGui.Selectable(mode.ToString(), _config.FileNameMode == mode))
+                    {
+                        _config.FileNameMode = mode;
+                        _config.Save();
+                    }
+                }
+                ImGui.EndCombo();
+            }
+        }
+
+        private void DrawAutoRecordTriggerGroup()
+        {
+            ImGui.TextColored(new Vector4(0.51f, 0.78f, 0.52f, 1f), "自动录制触发");
 
             if (ImGui.Checkbox("战斗开始时自动录制", ref _config.StartRecordOnCombat))
-            {
                 _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，战斗开始时将自动开始录制。");
 
             if (ImGui.Checkbox("倒计时开始时自动录制", ref _config.StartRecordOnCountDown))
-            {
                 _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，倒计时开始时将自动开始录制。");
 
-            ImGui.SameLine(ImGui.GetColumnWidth() - 350);
             if (ImGui.Checkbox("倒计时取消时停止录制", ref _config.StopRecordOnCountDownCancel))
-            {
                 _config.Save();
+
+            if (ImGui.CollapsingHeader("录制筛选"))
+            {
+                ImGui.Indent();
+
+                if (ImGui.Checkbox("显示所有筛选", ref _config.ShowAllFilters))
+                    _config.Save();
+
+                DrawContentTree();
+
+                ImGui.Unindent();
             }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，倒计时取消时将自动停止录制。");
+        }
+
+        private void DrawContentTree()
+        {
+            foreach (var l1 in _dutyTree)
+            {
+                bool isToggleable = l1.Key != "副本" && l1.Key != "多人内容";
+                if (isToggleable && !_config.ShowAllFilters)
+                    continue;
+
+                ImGui.Indent();
+                if (ImGui.TreeNode(l1.Key))
+                {
+                    foreach (var l2 in l1.Value)
+                    {
+                        ImGui.Indent();
+                        if (ImGui.TreeNode(l2.Key))
+                        {
+                            foreach (var entry in l2.Value)
+                            {
+                                bool selected = _config.SelectedContents.Get((int)entry.RowId);
+                                if (ImGui.Checkbox(entry.Name, ref selected))
+                                {
+                                    _config.SelectedContents.Set((int)entry.RowId, selected);
+                                    _config.Save();
+                                }
+                            }
+                            ImGui.TreePop();
+                        }
+                        ImGui.Unindent();
+                    }
+                    ImGui.TreePop();
+                }
+                ImGui.Unindent();
+            }
+        }
+
+        private void DrawAutoStopRecordGroup()
+        {
+            ImGui.TextColored(new Vector4(1f, 0.72f, 0.3f, 1f), "自动停止录制");
 
             if (ImGui.Checkbox("战斗结束后停止录制", ref _config.StopRecordOnCombat))
-            {
                 _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，战斗结束后将自动停止录制。");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(-1);
-            if (ImGui.DragInt("", ref _config.StopRecordOnCombatDelay, 1, 0, 300, "%d 秒"))
+
+            if (_config.StopRecordOnCombat)
             {
-                _config.Save();
+                ImGui.Indent();
+                ImGui.SetNextItemWidth(100);
+                if (ImGui.DragInt("延迟秒数", ref _config.StopRecordOnCombatDelay, 1, 0, 300))
+                    _config.Save();
+
+                ImGui.Checkbox("过场时不要停止录制", ref _config.DontStopInCutscene);
+                ImGui.Checkbox("战斗恢复时取消停止录制", ref _config.CancelStopRecordOnResume);
+                ImGui.Unindent();
             }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("战斗结束后停止录制的延迟时间（秒）。");
 
             if (ImGui.Checkbox("离开区域时停止录制", ref _config.StopRecordOnZoneExit))
-            {
                 _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，离开区域时将自动停止录制。");
-
-            if (_config.StopRecordOnCombat && ImGui.Checkbox("过场时不要停止录制", ref _config.DontStopInCutscene))
-            {
-                _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，观看过场动画时不会停止录制。");
-            if (_config.StopRecordOnCombat && ImGui.Checkbox("战斗恢复时取消停止录制", ref _config.CancelStopRecordOnResume))
-            {
-                _config.Save();
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("如果选择，在停止倒计时前有新的战斗则不停止录制。");
         }
     }
 }

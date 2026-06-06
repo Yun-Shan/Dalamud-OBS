@@ -49,8 +49,8 @@ namespace OBSPlugin
         public bool CancelStopRecordOnResume = true;
         public int StopRecordOnCombatDelay = 5;
         public bool DontStopInCutscene = true;
-        public SubFolderMode SubFolderMode = SubFolderMode.Territory;
-        public FileNameMode FileNameMode = FileNameMode.TerritorySuffix;
+        public SubFolderModeType SubFolderMode = SubFolderModeType.Territory;
+        public FileNameModeType FileNameMode = FileNameModeType.TerritorySuffix;
         public BitSet SelectedContents;
         public bool ShowAllFilters = false;
         #endregion
@@ -71,7 +71,7 @@ namespace OBSPlugin
             Plugin.PluginInterface.SavePluginConfig(this);
         }
 
-        public enum SubFolderMode
+        public enum SubFolderModeType
         {
             None = 0,
             ContentName = 1,
@@ -79,7 +79,7 @@ namespace OBSPlugin
             Territory = 3,
         }
 
-        public enum FileNameMode
+        public enum FileNameModeType
         {
             None = 0,
             ContentNameSuffix = 1,

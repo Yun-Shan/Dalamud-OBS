@@ -18,7 +18,7 @@ namespace OBSPlugin
 
         private string _lastDutyEvent = "";
         private DateTime _lastDutyEventTime = DateTime.MinValue;
-        private OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> _debugDutyTree = new();
+        private OrderedDictionary<string, OrderedDictionary<string, List<Services.ContentEntry>>> _debugDutyTree = new();
         private bool _debugDutyTreeCached = false;
 
         public DebugTab(Configuration config, IDutyState dutyState, IDataManager data, IPluginLog log, IChatGui chat)

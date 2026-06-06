@@ -65,6 +65,7 @@ namespace OBSPlugin
             _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
             _streamTab = new StreamTab(Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
             _recordTab = new RecordTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat, _recordDirManager.SetRecordingDir);
+            RecordTab.Initialize(Plugin.Data);
             _replayTab = new ReplayTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
             _blurTab = new BlurTab(Config, _blurManager, Plugin.PluginLog);
             _aboutTab = new AboutTab(Plugin.PluginLog);
