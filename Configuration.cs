@@ -1,4 +1,4 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Newtonsoft.Json;
 using System;
@@ -7,14 +7,15 @@ namespace OBSPlugin
 {
     public class Configuration : IPluginConfiguration
     {
-        public int Version { get; set; }
-
+        #region Connection Settings
         public bool Enabled = true;
         public bool UIDetection = true;
         public string SourceName = "FFXIV";
-        public string Address = "ws://127.0.0.1:4455/"; // Default port was updated by obs-websocket. 
+        public string Address = "ws://127.0.0.1:4455/"; // Default port was updated by obs-websocket.
         public string Password = "";
-               // Blur settings
+        #endregion
+
+        #region Blur Settings
         public bool EnableBlur = false;
         public int BlurSize = 3;
         public bool BlurAsync = true;
@@ -31,9 +32,10 @@ namespace OBSPlugin
         public bool CastBarBlur = false;
         public int MaxNamePlateCount = 1;
         public int[] BlurredHotbars = Array.Empty<int>();
-        // Record settings
+        #endregion
+
+        #region Record Settings
         public string RecordDir = "";
-        // public string FilenameFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public bool IncludeTerritory = true;
         public bool ZoneAsSuffix = false;
         public bool StartRecordOnCountDown = false;
@@ -46,12 +48,18 @@ namespace OBSPlugin
         public bool CancelStopRecordOnResume = true;
         public int StopRecordOnCombatDelay = 5;
         public bool DontStopInCutscene = true;
-        // Debug settings
+        #endregion
+
+        #region Debug Settings
         public bool EnableDebug = false;
         public bool ResetReplayBufferDirByTerritory = false;
         public bool SaveReplayBufferOnCombat = false;
         public int SaveReplayBufferOnCombatDelay = 0;
+        #endregion
 
+        #region Version
+        public int Version { get; set; }
+        #endregion
 
         public void Save()
         {
