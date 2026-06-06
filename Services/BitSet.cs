@@ -63,7 +63,7 @@ namespace OBSPlugin.Services
             return count_;
         }
 
-        public long[] ToArray() => _bits;
+        public long[] ToArray() => _bits.ToArray();
 
         public void LoadFrom(long[] array)
         {
