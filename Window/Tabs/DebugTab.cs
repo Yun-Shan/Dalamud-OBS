@@ -73,7 +73,6 @@ namespace OBSPlugin
 
             if (!_config.EnableDebug)
             {
-                ImGui.EndChild();
                 return;
             }
 
