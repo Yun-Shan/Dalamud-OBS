@@ -107,12 +107,12 @@ namespace OBSPlugin
 
             ImGui.SetNextWindowSize(new Vector2(530, 450), ImGuiCond.FirstUseEver);
             bool configOpen = IsVisible;
-            if (ImGui.Begin("OBS Plugin Config", ref configOpen))
+            if (ImGui.Begin("OBS 插件配置", ref configOpen))
             {
                 IsVisible = configOpen;
                 if (ImGui.BeginTabBar("TabBar"))
                 {
-                    if (ImGui.BeginTabItem("Connection##Tab"))
+                    if (ImGui.BeginTabItem("连接##Tab"))
                     {
                         if (ImGui.BeginChild("Connection##SettingsRegion"))
                         {
@@ -121,7 +121,7 @@ namespace OBSPlugin
                         }
                         ImGui.EndTabItem();
                     }
-                    if (ImGui.BeginTabItem("Stream##Tab"))
+                    if (ImGui.BeginTabItem("直播##Tab"))
                     {
                         if (ImGui.BeginChild("Stream##SettingsRegion"))
                         {
@@ -130,7 +130,7 @@ namespace OBSPlugin
                         }
                         ImGui.EndTabItem();
                     }
-                    if (ImGui.BeginTabItem("Record##Tab"))
+                    if (ImGui.BeginTabItem("录制##Tab"))
                     {
                         if (ImGui.BeginChild("Record##SettingsRegion"))
                         {
@@ -139,7 +139,7 @@ namespace OBSPlugin
                         }
                         ImGui.EndTabItem();
                     }
-                    if (ImGui.BeginTabItem("Replay##Tab"))
+                    if (ImGui.BeginTabItem("回放##Tab"))
                     {
                         if (ImGui.BeginChild("Replay##SettingsRegion"))
                         {
@@ -148,7 +148,7 @@ namespace OBSPlugin
                         }
                         ImGui.EndTabItem();
                     }
-                    if (ImGui.BeginTabItem("Blur##Tab"))
+                    if (ImGui.BeginTabItem("模糊##Tab"))
                     {
                         if (ImGui.BeginChild("Blur##SettingsRegion"))
                         {
@@ -157,7 +157,7 @@ namespace OBSPlugin
                         }
                         ImGui.EndTabItem();
                     }
-                    if (ImGui.BeginTabItem("About##Tab"))
+                    if (ImGui.BeginTabItem("关于##Tab"))
                     {
                         if (ImGui.BeginChild("Blur##SettingsRegion"))
                         {
@@ -300,6 +300,7 @@ namespace OBSPlugin
         internal unsafe void UpdateGameUI()
         {
             if (!Config.Enabled) return;
+            if (!Config.EnableBlur) return;
             if (!Plugin.Connected) return;
             if (Plugin.ObjectTable.LocalPlayer == null) return;
             try
@@ -876,15 +877,15 @@ namespace OBSPlugin
 
         private void DrawConnectionSettings()
         {
-            if (ImGui.Checkbox("Enabled", ref Config.Enabled))
+            if (ImGui.Checkbox("启用", ref Config.Enabled))
             {
                 Config.Save();
             }
             ImGui.SameLine(ImGui.GetColumnWidth() - 80);
             ImGui.TextColored(Plugin.Connected ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1),
-                Plugin.Connected ? "Connected" : "Disconnected");
+                Plugin.Connected ? "已连接" : "未连接");
             var address = Config.Address;
-            if (ImGui.InputText("Server Address", ref address, 128, ImGuiInputTextFlags.EnterReturnsTrue))
+            if (ImGui.InputText("服务器地址", ref address, 128, ImGuiInputTextFlags.EnterReturnsTrue))
             {
                 if (int.TryParse(address, out int port))
                 {
@@ -898,13 +899,13 @@ namespace OBSPlugin
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Press Enter to Confirm");
-            
-            if (ImGui.InputText("Password", ref Config.Password, 128, ImGuiInputTextFlags.Password))
+                ImGui.SetTooltip("按回车确认");
+
+            if (ImGui.InputText("密码", ref Config.Password, 128, ImGuiInputTextFlags.Password))
             {
                 Config.Save();
             }
-            string connectionButtonText = Plugin.Connected ? "Disconnect" : "Connect";
+            string connectionButtonText = Plugin.Connected ? "断开连接" : "连接";
             if (ImGui.Button(connectionButtonText))
             {
                 if (Plugin.Connected)
@@ -919,18 +920,33 @@ namespace OBSPlugin
             if (Plugin.ConnectionFailed)
             {
                 ImGui.SameLine();
-                ImGui.Text("Authentication failed, check the address and password!");
+                ImGui.Text("认证失败，请检查地址和密码！");
             }
             if (Plugin.Connected)
             {
                 ImGui.Separator();
-                ImGui.Text("OBS Plugin Version: " + Plugin.versionInfo.PluginVersion);
-                ImGui.Text("OBS Version: " + Plugin.versionInfo.OBSStudioVersion);
+                ImGui.Text("OBS 插件版本：" + Plugin.versionInfo.PluginVersion);
+                ImGui.Text("OBS 版本：" + Plugin.versionInfo.OBSStudioVersion);
             }
         }
 
         private void DrawBlurSettings()
         {
+            if (ImGui.Checkbox("Enable Blur", ref Config.EnableBlur))
+            {
+                if (!Config.EnableBlur)
+                {
+                    foreach (var blur in BlurDict.Values)
+                    {
+                        BlurItemsToRemove.Add((Blur)blur.Clone());
+                    }
+                    BlurDict.Clear();
+                }
+                Config.Save();
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Master switch for all blur functionality.");
+            ImGui.Separator();
             if (ImGui.Checkbox("UI Detection", ref Config.UIDetection))
             {
                 UIErrorCount = 0;
@@ -1168,13 +1184,11 @@ namespace OBSPlugin
 
         private void DrawAbout()
         {
-            // ImGui.Text("This plugin is still WIP, lot of functions are still in development.");
-
-            ImGui.Text("You need to install the blur plugin in your OBS for the blur filters to work."); 
+            ImGui.Text("你需要在 OBS 中安装模糊插件才能使模糊滤镜正常工作。");
 
             ImGui.Separator();
 
-            ImGui.Text("For OBS v30+:");
+            ImGui.Text("对于 OBS v30+：");
             ImGui.BulletText("");
             ImGui.SameLine();
             if (ImGui.Button("OBS Composite Blur"))
@@ -1193,17 +1207,17 @@ namespace OBSPlugin
                 }
             }
             ImGui.SameLine();
-            ImGui.Text("Just download and install.");
+            ImGui.Text("下载并安装即可。");
 
             ImGui.BulletText("");
             ImGui.SameLine();
             ImGui.Text("OBS-websocket 5.3.0");
             ImGui.SameLine();
-            ImGui.TextWrapped("It's a built-in plugin in OBS v30, but you still need to set a password and enable it in the Tools -> " +
-                "OBS Websocket Server Settings in your OBS, and then provide the port & password in the #Connection tab.");
+            ImGui.TextWrapped("这是 OBS v30 内置插件，但你仍需要在 OBS 中设置密码并启用它（工具 -> OBS Websocket Server Settings），" +
+                "然后在连接标签页中提供端口和密码。");
 
             ImGui.NewLine();
-            ImGui.Text("If you encountered any bugs please submit issues in");
+            ImGui.Text("如果遇到任何 bug，请在以下位置提交问题：");
             ImGui.SameLine();
             if (ImGui.Button("Github"))
             {
@@ -1211,7 +1225,7 @@ namespace OBSPlugin
                 {
                     Process.Start(new ProcessStartInfo()
                     {
-                        FileName = "https://github.com/Bluefissure/Dalamud-OBS",
+                        FileName = "https://github.com/Yun-Shan/Dalamud-OBS",
                         UseShellExecute = true,
                     });
                 }
@@ -1232,23 +1246,23 @@ namespace OBSPlugin
             switch (Plugin.obsStreamStatus)
             {
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTING:
-                    obsButtonText = "Stream starting...";
+                    obsButtonText = "直播开始中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTED:
-                    obsButtonText = "Stop streaming";
+                    obsButtonText = "停止直播";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPING:
-                    obsButtonText = "Stream stopping...";
+                    obsButtonText = "直播停止中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED:
-                    obsButtonText = "Start streaming";
+                    obsButtonText = "开始直播";
                     break;
 
                 default:
-                    obsButtonText = "State unknown";
+                    obsButtonText = "状态未知";
                     break;
             }
 
@@ -1268,17 +1282,17 @@ namespace OBSPlugin
 
             ImGui.SameLine(ImGui.GetColumnWidth() - 80);
             ImGui.TextColored(Plugin.obsStreamStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1),
-                Plugin.obsStreamStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "Streaming" : "Stopped");
+                Plugin.obsStreamStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "直播中" : "已停止");
 
             if (Plugin.streamStats != null && Plugin.streamStats.IsActive)
             {
-                ImGui.Text($"Streaming : {Plugin.streamStats.IsActive}");
-                ImGui.Text($"Reconnecting : {Plugin.streamStats.IsReconnecting}");
-                ImGui.Text($"Stream Time : {Plugin.streamStats.TimeCode}");
-                ImGui.Text($"Congestion : {Plugin.streamStats.Congestion}");
-                ImGui.Text($"Total Frames : {Plugin.streamStats.TotalFrames}");
-                ImGui.Text($"Dropped Frames : {Plugin.streamStats.SkippedFrames}");
-                ImGui.Text($"Bytes Sent : {Plugin.streamStats.BytesSent}");
+                ImGui.Text($"直播中：{Plugin.streamStats.IsActive}");
+                ImGui.Text($"重新连接中：{Plugin.streamStats.IsReconnecting}");
+                ImGui.Text($"直播时间：{Plugin.streamStats.TimeCode}");
+                ImGui.Text($"拥塞：{Plugin.streamStats.Congestion}");
+                ImGui.Text($"总帧数：{Plugin.streamStats.TotalFrames}");
+                ImGui.Text($"丢帧：{Plugin.streamStats.SkippedFrames}");
+                ImGui.Text($"已发送字节：{Plugin.streamStats.BytesSent}");
             }
         }
 
@@ -1393,23 +1407,23 @@ namespace OBSPlugin
             switch (Plugin.obsRecordStatus)
             {
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTING:
-                    obsButtonText = "Record starting...";
+                    obsButtonText = "录制开始中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTED:
-                    obsButtonText = "Stop recording";
+                    obsButtonText = "停止录制";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPING:
-                    obsButtonText = "Record stopping...";
+                    obsButtonText = "录制停止中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED:
-                    obsButtonText = "Start recording";
+                    obsButtonText = "开始录制";
                     break;
 
                 default:
-                    obsButtonText = "State unknown";
+                    obsButtonText = "状态未知";
                     break;
             }
 
@@ -1433,9 +1447,9 @@ namespace OBSPlugin
 
             ImGui.SameLine(ImGui.GetColumnWidth() - 80);
             ImGui.TextColored(Plugin.obsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1),
-                Plugin.obsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "Recording" : "Stopped");
+                Plugin.obsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "录制中" : "已停止");
 
-            if (ImGui.InputText("Recordings Directory", ref Config.RecordDir, 256, ImGuiInputTextFlags.EnterReturnsTrue))
+            if (ImGui.InputText("录制目录", ref Config.RecordDir, 256, ImGuiInputTextFlags.EnterReturnsTrue))
             {
                 Config.Save();
                 if (Plugin.Connected)
@@ -1445,23 +1459,23 @@ namespace OBSPlugin
                 }
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Enter to save");
+                ImGui.SetTooltip("按回车保存");
             if (Config.UseDutyName)
             {
                 ImGui.BeginDisabled();
             }
-            if (ImGui.Checkbox("Zone as subfolder", ref Config.IncludeTerritory))
+            if (ImGui.Checkbox("区域作为子文件夹", ref Config.IncludeTerritory))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will save recordings to a subfolder named by the current zone name.");
+                ImGui.SetTooltip("如果选择，录制将保存到以当前区域名命名的子文件夹。");
             if (Config.UseDutyName)
             {
                 ImGui.EndDisabled();
             }
             ImGui.SameLine(ImGui.GetColumnWidth() - 400);
-            if (ImGui.Checkbox("Duty name as subfolder", ref Config.UseDutyName))
+            if (ImGui.Checkbox("副本名称作为子文件夹", ref Config.UseDutyName))
             {
                 if (Config.UseDutyName)
                 {
@@ -1471,71 +1485,71 @@ namespace OBSPlugin
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Use duty name instead of zone name as the subfolder if in a duty.");
+                ImGui.SetTooltip("如果在副本中，使用副本名称代替区域名作为子文件夹。");
 
-            if (ImGui.Checkbox("Zone as suffix", ref Config.ZoneAsSuffix))
+            if (ImGui.Checkbox("区域作为后缀", ref Config.ZoneAsSuffix))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will add a suffix named by the current zone name to recordings.");
+                ImGui.SetTooltip("如果选择，将以当前区域名作为录制文件的后缀。");
 
-            if (ImGui.Checkbox("Start Recording On Combat", ref Config.StartRecordOnCombat))
+            if (ImGui.Checkbox("战斗开始时自动录制", ref Config.StartRecordOnCombat))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically start recording when combat starts.");
+                ImGui.SetTooltip("如果选择，战斗开始时将自动开始录制。");
 
-            if (ImGui.Checkbox("Start Recording On CountDown", ref Config.StartRecordOnCountDown))
+            if (ImGui.Checkbox("倒计时开始时自动录制", ref Config.StartRecordOnCountDown))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically start recording when countdown starts.");
+                ImGui.SetTooltip("如果选择，倒计时开始时将自动开始录制。");
 
             ImGui.SameLine(ImGui.GetColumnWidth() - 350);
-            if (ImGui.Checkbox("Stop Recording On CountDown Cancel", ref Config.StopRecordOnCountDownCancel))
+            if (ImGui.Checkbox("倒计时取消时停止录制", ref Config.StopRecordOnCountDownCancel))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically stop recording when countdown gets cancelled.");
+                ImGui.SetTooltip("如果选择，倒计时取消时将自动停止录制。");
 
-            if (ImGui.Checkbox("Stop Recording On Combat Over In", ref Config.StopRecordOnCombat))
+            if (ImGui.Checkbox("战斗结束后停止录制", ref Config.StopRecordOnCombat))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically stop recording when combat is over in ");
+                ImGui.SetTooltip("如果选择，战斗结束后将自动停止录制。");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.DragInt("", ref Config.StopRecordOnCombatDelay, 1, 0, 300, "%d second(s)"))
+            if (ImGui.DragInt("", ref Config.StopRecordOnCombatDelay, 1, 0, 300, "%d 秒"))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Delay of \"Stop Recording On Combat Over\" in seconds.");
+                ImGui.SetTooltip("战斗结束后停止录制的延迟时间（秒）。");
 
-            if (ImGui.Checkbox("Stop Recording On Zone Exit", ref Config.StopRecordOnZoneExit))
+            if (ImGui.Checkbox("离开区域时停止录制", ref Config.StopRecordOnZoneExit))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically stop recording when exiting the zone.");
+                ImGui.SetTooltip("如果选择，离开区域时将自动停止录制。");
 
-            if (Config.StopRecordOnCombat && ImGui.Checkbox("Don't Stop Recording in cutscene", ref Config.DontStopInCutscene))
+            if (Config.StopRecordOnCombat && ImGui.Checkbox("过场时不要停止录制", ref Config.DontStopInCutscene))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will not stop recording if player is viewing cutscenes.");
-            if (Config.StopRecordOnCombat && ImGui.Checkbox("Cancel Stop Recording On Combat Resume", ref Config.CancelStopRecordOnResume))
+                ImGui.SetTooltip("如果选择，观看过场动画时不会停止录制。");
+            if (Config.StopRecordOnCombat && ImGui.Checkbox("战斗恢复时取消停止录制", ref Config.CancelStopRecordOnResume))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will not stop recording if another starts before stop countdown.");
+                ImGui.SetTooltip("如果选择，在停止倒计时前有新的战斗则不停止录制。");
         }
 
         private void DrawReplay()
@@ -1546,23 +1560,23 @@ namespace OBSPlugin
             switch (Plugin.obsReplayBufferStatus)
             {
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTING:
-                    obsButtonText = "Replay buffer starting...";
+                    obsButtonText = "回放缓存启动中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTED:
-                    obsButtonText = "Stop replay buffer";
+                    obsButtonText = "停止回放缓存";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPING:
-                    obsButtonText = "Replay buffer stopping...";
+                    obsButtonText = "回放缓存停止中...";
                     break;
 
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED:
-                    obsButtonText = "Start replay buffer";
+                    obsButtonText = "启动回放缓存";
                     break;
 
                 default:
-                    obsButtonText = "State unknown";
+                    obsButtonText = "状态未知";
                     break;
             }
 
@@ -1581,44 +1595,44 @@ namespace OBSPlugin
             }
             ImGui.SameLine(ImGui.GetColumnWidth() - 80);
             ImGui.TextColored(Plugin.obsReplayBufferStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1),
-                Plugin.obsReplayBufferStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "Replaying" : "Stopped");
+                Plugin.obsReplayBufferStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STARTED ? "回放中" : "已停止");
 
-            if (ImGui.Checkbox("Start Replay Buffer On Auto Record", ref Config.StartReplayBufferOnRecord))
+            if (ImGui.Checkbox("自动录制时启动回放缓存", ref Config.StartReplayBufferOnRecord))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically start replay buffer when auto record starts");
+                ImGui.SetTooltip("如果选择，自动录制开始时将自动启动回放缓存。");
 
-            if (ImGui.Checkbox("Zone as sub folder", ref Config.ResetReplayBufferDirByTerritory))
+            if (ImGui.Checkbox("区域作为子文件夹", ref Config.ResetReplayBufferDirByTerritory))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically set replay buffer directory for different territory.\n" +
-                    "It will make the replay buffer stopped and restarted automatically when changing territories.\n" +
-                    "Otherwise all the replay buffer will be saved to the folder where it started.");
+                ImGui.SetTooltip("如果选择，将自动为不同区域设置回放缓存目录。\n" +
+                    "这会使回放缓存在切换区域时自动停止和重启。\n" +
+                    "否则所有回放缓存将保存到它启动时的文件夹。");
 
-            if (ImGui.Checkbox("Save Replay Buffer On Combat Over In", ref Config.SaveReplayBufferOnCombat))
+            if (ImGui.Checkbox("战斗结束后保存回放缓存", ref Config.SaveReplayBufferOnCombat))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("If selected, will automatically save replay buffer when combat is over in ");
+                ImGui.SetTooltip("如果选择，战斗结束后将自动保存回放缓存。");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.DragInt("", ref Config.SaveReplayBufferOnCombatDelay, 1, 0, 300, "%d second(s)"))
+            if (ImGui.DragInt("", ref Config.SaveReplayBufferOnCombatDelay, 1, 0, 300, "%d 秒"))
             {
                 Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Delay of \"Save Replay Buffer On Combat Over\" in seconds.");
+                ImGui.SetTooltip("战斗结束后保存回放缓存的延迟时间（秒）。");
 
             if (Plugin.obsReplayBufferStatus != OutputState.OBS_WEBSOCKET_OUTPUT_STARTED)
             {
                 ImGui.BeginDisabled();
             }
-            if (ImGui.Button("Save replay buffer"))
+            if (ImGui.Button("保存回放"))
             {
                 if (!Plugin.Connected) return;
                 try

@@ -14,7 +14,8 @@ namespace OBSPlugin
         public string SourceName = "FFXIV";
         public string Address = "ws://127.0.0.1:4455/"; // Default port was updated by obs-websocket. 
         public string Password = "";
-        // Blur settings
+               // Blur settings
+        public bool EnableBlur = false;
         public int BlurSize = 3;
         public bool BlurAsync = true;
         public bool DrawBlurRect = false;
