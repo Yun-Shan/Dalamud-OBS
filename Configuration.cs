@@ -1,6 +1,7 @@
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Newtonsoft.Json;
+using OBSPlugin.Services;
 using System;
 
 namespace OBSPlugin
@@ -48,6 +49,10 @@ namespace OBSPlugin
         public bool CancelStopRecordOnResume = true;
         public int StopRecordOnCombatDelay = 5;
         public bool DontStopInCutscene = true;
+        public SubFolderMode SubFolderMode = SubFolderMode.Territory;
+        public FileNameMode FileNameMode = FileNameMode.TerritorySuffix;
+        public BitSet SelectedContents;
+        public bool ShowAllFilters = false;
         #endregion
 
         #region Debug Settings
@@ -64,6 +69,30 @@ namespace OBSPlugin
         public void Save()
         {
             Plugin.PluginInterface.SavePluginConfig(this);
+        }
+
+        public enum SubFolderMode
+        {
+            None = 0,
+            ContentName = 1,
+            ContentType = 2,
+            Territory = 3,
+        }
+
+        public enum FileNameMode
+        {
+            None = 0,
+            ContentNameSuffix = 1,
+            ContentNamePrefix = 2,
+            TerritorySuffix = 3,
+            TerritoryPrefix = 4,
+        }
+
+        public enum TriState
+        {
+            Unchecked = 0,
+            Checked = 1,
+            Indeterminate = 2,
         }
     }
 }
