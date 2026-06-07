@@ -11,14 +11,12 @@ namespace OBSPlugin
     {
         private readonly Configuration _config;
         private readonly BlurManager _blurManager;
-        private readonly IPluginLog _log;
         private int _uiErrorCount = 0;
 
-        public BlurTab(Configuration config, BlurManager blurManager, IPluginLog log)
+        public BlurTab(Configuration config, BlurManager blurManager)
         {
             _config = config;
             _blurManager = blurManager;
-            _log = log;
         }
 
         public void Draw()
@@ -82,31 +80,31 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("ChatLog", out chatLogBlur))
                     {
                         chatLogBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", chatLogBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", chatLogBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)chatLogBlur.Clone());
                     }
                     if (_blurManager.BlurDict.TryGetValue("ChatLogPanel_0", out chatLogBlur))
                     {
                         chatLogBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", chatLogBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", chatLogBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)chatLogBlur.Clone());
                     }
                     if (_blurManager.BlurDict.TryGetValue("ChatLogPanel_1", out chatLogBlur))
                     {
                         chatLogBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", chatLogBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", chatLogBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)chatLogBlur.Clone());
                     }
                     if (_blurManager.BlurDict.TryGetValue("ChatLogPanel_2", out chatLogBlur))
                     {
                         chatLogBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", chatLogBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", chatLogBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)chatLogBlur.Clone());
                     }
                     if (_blurManager.BlurDict.TryGetValue("ChatLogPanel_3", out chatLogBlur))
                     {
                         chatLogBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", chatLogBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", chatLogBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)chatLogBlur.Clone());
                     }
                 }
@@ -120,7 +118,7 @@ namespace OBSPlugin
                     foreach (Blur blur in blursToTurnOff)
                     {
                         blur.Enabled = false;
-                        _log.Debug("Turn off {0}", blur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", blur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)blur.Clone());
                     }
                 }
@@ -134,7 +132,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("Target", out targetBlur))
                     {
                         targetBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", targetBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", targetBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)targetBlur.Clone());
                     }
                 }
@@ -149,7 +147,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("TargetTarget", out targetTargetBlur))
                     {
                         targetTargetBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", targetTargetBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", targetTargetBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)targetTargetBlur.Clone());
                     }
                 }
@@ -164,7 +162,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("FocusTarget", out focusTargetBlur))
                     {
                         focusTargetBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", focusTargetBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", focusTargetBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)focusTargetBlur.Clone());
                     }
                 }
@@ -178,7 +176,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("Character", out characterBlur))
                     {
                         characterBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", characterBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", characterBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)characterBlur.Clone());
                     }
                 }
@@ -193,7 +191,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("FriendList", out friendListBlur))
                     {
                         friendListBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", friendListBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", friendListBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)friendListBlur.Clone());
                     }
                 }
@@ -206,7 +204,7 @@ namespace OBSPlugin
                     var hotbars = _blurManager.BlurDict.Where(x => x.Key.Length >= 8 && x.Key[..6] == "Hotbar");
                     if (hotbars.Any())
                     {
-                        _log.Debug("Turn off HotbarBlur");
+                        Plugin.PluginLog.Debug("Turn off HotbarBlur");
                         foreach (var i in hotbars)
                         {
                             i.Value.Enabled = false;
@@ -237,7 +235,7 @@ namespace OBSPlugin
                     if (_blurManager.BlurDict.TryGetValue("CastBar", out castbarBlur))
                     {
                         castbarBlur.Enabled = false;
-                        _log.Debug("Turn off {0}", castbarBlur.Name);
+                        Plugin.PluginLog.Debug("Turn off {0}", castbarBlur.Name);
                         _blurManager.BlurItemsToAdd.Add((Blur)castbarBlur.Clone());
                     }
                 }

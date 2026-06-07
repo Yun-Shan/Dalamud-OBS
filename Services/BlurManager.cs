@@ -12,7 +12,6 @@ namespace OBSPlugin
 {
     public class BlurManager
     {
-        private readonly IPluginLog _log;
         private readonly IOBSWebsocket _obs;
         private readonly Configuration _config;
         private bool _isThreadRunning = true;
@@ -21,9 +20,8 @@ namespace OBSPlugin
         internal BlockingCollection<Blur> BlurItemsToRemove { get; } = new(10000);
         public Dictionary<string, Blur> BlurDict { get; } = new();
 
-        public BlurManager(IPluginLog log, IOBSWebsocket obs, Configuration config)
+        public BlurManager(IOBSWebsocket obs, Configuration config)
         {
-            _log = log;
             _obs = obs;
             _config = config;
             InitAddConsuming();
@@ -56,7 +54,7 @@ namespace OBSPlugin
                         OBSAddOrUpdateBlur(blur);
                     }
                 }
-                _log.Information("No more OBS blurs to add.");
+                Plugin.PluginLog.Information("No more OBS blurs to add.");
             });
 
         }
@@ -79,7 +77,7 @@ namespace OBSPlugin
                         OBSRemoveBlur(blur);
                     }
                 }
-                _log.Information("No more OBS blurs to add.");
+                Plugin.PluginLog.Information("No more OBS blurs to add.");
             });
         }
 
@@ -130,17 +128,17 @@ namespace OBSPlugin
                 {
                     _config.UIDetection = false;
                     var errMsg = $"Cannot find source \"{_config.SourceName}\", please check.";
-                    _log.Error(errMsg);
+                    Plugin.PluginLog.Error(errMsg);
                     _config.Save();
                 }
                 return false;
             }
             catch (Exception e)
             {
-                _log.Error("Failed updating blur: {0}", e);
+                Plugin.PluginLog.Error("Failed updating blur: {0}", e);
                 return false;
             }
-            _log.Debug("Updated blur: {0} {1} ({2}, {3}, {4}, {5})", blur.Name, blur.Enabled, blur.Top, blur.Bottom, blur.Left, blur.Right);
+            Plugin.PluginLog.Debug("Updated blur: {0} {1} ({2}, {3}, {4}, {5})", blur.Name, blur.Enabled, blur.Top, blur.Bottom, blur.Left, blur.Right);
             return true;
         }
 
@@ -151,11 +149,11 @@ namespace OBSPlugin
             try
             {
                 removed = _obs.RemoveSourceFilter(_config.SourceName, blur.Name);
-                _log.Debug("Deleted blur: {0}", blur.Name);
+                Plugin.PluginLog.Debug("Deleted blur: {0}", blur.Name);
             }
             catch (Exception e)
             {
-                _log.Error("Failed deleting blur: {0}", e);
+                Plugin.PluginLog.Error("Failed deleting blur: {0}", e);
                 return false;
             }
             return removed;
@@ -174,11 +172,11 @@ namespace OBSPlugin
                         _obs.RemoveSourceFilter(_config.SourceName, filter.Name);
                     }
                 }
-                _log.Debug("Deleted all blurs starting with {0}", blurNamePrefix);
+                Plugin.PluginLog.Debug("Deleted all blurs starting with {0}", blurNamePrefix);
             }
             catch (Exception e)
             {
-                _log.Error("Failed deleting blurs: {0}", e);
+                Plugin.PluginLog.Error("Failed deleting blurs: {0}", e);
                 return false;
             }
             return true;

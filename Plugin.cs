@@ -88,9 +88,9 @@ namespace OBSPlugin
             Data = data;
             GameInteropProvider = gameInteropProvider;
 
-            this.config = (Configuration)PluginInterface.GetPluginConfig() ?? new Configuration();
+            this.config = (Configuration?)PluginInterface.GetPluginConfig() ?? new Configuration();
 
-            obsConnection = new ObsConnection(this.config, PluginLog, Chat, ClientState, Data);
+            obsConnection = new ObsConnection(this.config, Chat, ClientState);
 
             _replayCommandHandler = new ReplayCommandHandler(obsConnection.OBS, Chat, obsConnection.ObsReplayBufferStatus);
             _streamCommandHandler = new StreamCommandHandler(obsConnection.OBS, Chat, obsConnection.OBS.GetStreamStatus);
@@ -111,7 +111,6 @@ namespace OBSPlugin
             combatState = new CombatState();
             autoRecordLogic = new AutoRecordLogic(
                 config,
-                PluginLog,
                 Framework,
                 ObjectTable,
                 obsConnection,
@@ -119,7 +118,7 @@ namespace OBSPlugin
                 () => this.ui.RecordDirManager.SetRecordingDir(),
                 () => this.ui.RecordDirManager.ResetReplayBufferRecordingDir());
 
-            this.stopWatchHook = new OBSPlugin.Services.StopWatchHook(combatState, SigScanner, Condition, GameInteropProvider, PluginLog);
+            this.stopWatchHook = new OBSPlugin.Services.StopWatchHook(combatState, SigScanner, Condition, GameInteropProvider);
 
             PluginLog.Information("stopWatchHook");
             this.commandManager = new PluginCommandManager<Plugin>(this, Commands);

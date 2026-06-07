@@ -7,11 +7,8 @@ namespace OBSPlugin
 {
     public class AboutTab
     {
-        private readonly IPluginLog _log;
-
-        public AboutTab(IPluginLog log)
+        public AboutTab()
         {
-            _log = log;
         }
 
         public void Draw()
@@ -35,7 +32,7 @@ namespace OBSPlugin
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Could not open OBS Composite Blur url");
+                    Plugin.PluginLog.Error(ex, "Could not open OBS Composite Blur url");
                 }
             }
             ImGui.SameLine();
@@ -63,7 +60,7 @@ namespace OBSPlugin
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Could not open OBS-websocket url");
+                    Plugin.PluginLog.Error(ex, "Could not open OBS-websocket url");
                 }
             }
         }

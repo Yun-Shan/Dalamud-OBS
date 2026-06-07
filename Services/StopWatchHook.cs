@@ -17,7 +17,6 @@ namespace OBSPlugin.Services
         private readonly ISigScanner _sig;
         private readonly ICondition _condition;
         private readonly IGameInteropProvider _gameInteropProvider;
-        private readonly IPluginLog _log;
 
         private DateTime _combatTimeEnd;
 
@@ -46,15 +45,13 @@ namespace OBSPlugin.Services
             CombatState state,
             ISigScanner sig,
             ICondition condition,
-            IGameInteropProvider gameInteropProvider,
-            IPluginLog log
+            IGameInteropProvider gameInteropProvider
         )
         {
             _state = state;
             _sig = sig;
             _condition = condition;
             _gameInteropProvider = gameInteropProvider;
-            _log = log;
             _countDown = 0;
             _countdownTimer = CountdownTimerFunc;
             HookCountdownPointer();
@@ -88,7 +85,7 @@ namespace OBSPlugin.Services
                 // Check if SigScanner service was injected
                 if (_sig == null)
                 {
-                    _log.Warning("SigScanner service not available - using FFXIVClientStructs Agent fallback");
+                    Plugin.PluginLog.Warning("SigScanner service not available - using FFXIVClientStructs Agent fallback");
                     _useAgentFallback = true;
                     return;
                 }
@@ -96,18 +93,18 @@ namespace OBSPlugin.Services
                 // Signature from EngageTimer/DelvUI - valid for FFXIV 7.x
                 if (!_sig.TryScanText("40 53 48 83 EC 40 80 79 38 00", out _countdownPtr))
                 {
-                    _log.Warning("Could not find countdown timer signature - using FFXIVClientStructs Agent fallback");
+                    Plugin.PluginLog.Warning("Could not find countdown timer signature - using FFXIVClientStructs Agent fallback");
                     _useAgentFallback = true;
                     return;
                 }
 
                 _countdownTimerHook = _gameInteropProvider.HookFromAddress<CountdownTimer>(_countdownPtr, _countdownTimer);
                 _countdownTimerHook.Enable();
-                _log.Info("Countdown timer hook installed successfully");
+                Plugin.PluginLog.Info("Countdown timer hook installed successfully");
             }
             catch (Exception e)
             {
-                _log.Error("Could not hook to timer, using Agent fallback\n" + e);
+                Plugin.PluginLog.Error("Could not hook to timer, using Agent fallback\n" + e);
                 _useAgentFallback = true;
             }
         }
@@ -190,7 +187,7 @@ namespace OBSPlugin.Services
             }
             catch (Exception e)
             {
-                _log.Error("Error reading countdown from Agent: " + e.Message);
+                Plugin.PluginLog.Error("Error reading countdown from Agent: " + e.Message);
             }
         }
 

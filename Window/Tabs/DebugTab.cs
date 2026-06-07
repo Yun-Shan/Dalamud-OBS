@@ -11,9 +11,6 @@ namespace OBSPlugin
     public class DebugTab
     {
         private readonly Configuration _config;
-        private readonly IDutyState _dutyState;
-        private readonly IDataManager _data;
-        private readonly IPluginLog _log;
         private readonly IChatGui _chat;
 
         private string _lastDutyEvent = "";
@@ -21,34 +18,31 @@ namespace OBSPlugin
         private OrderedDictionary<string, OrderedDictionary<string, List<Services.ContentEntry>>> _debugDutyTree = new();
         private bool _debugDutyTreeCached = false;
 
-        public DebugTab(Configuration config, IDutyState dutyState, IDataManager data, IPluginLog log, IChatGui chat)
+        public DebugTab(Configuration config, IChatGui chat)
         {
             _config = config;
-            _dutyState = dutyState;
-            _data = data;
-            _log = log;
             _chat = chat;
             InitDutyEventHandlers();
         }
 
         private void InitDutyEventHandlers()
         {
-            _dutyState.DutyStarted += _ =>
+            Plugin.DutyState.DutyStarted += _ =>
             {
                 _lastDutyEvent = "副本已开始";
                 _lastDutyEventTime = DateTime.Now;
             };
-            _dutyState.DutyWiped += _ =>
+            Plugin.DutyState.DutyWiped += _ =>
             {
                 _lastDutyEvent = "副本已灭团";
                 _lastDutyEventTime = DateTime.Now;
             };
-            _dutyState.DutyRecommenced += _ =>
+            Plugin.DutyState.DutyRecommenced += _ =>
             {
                 _lastDutyEvent = "副本已重开";
                 _lastDutyEventTime = DateTime.Now;
             };
-            _dutyState.DutyCompleted += _ =>
+            Plugin.DutyState.DutyCompleted += _ =>
             {
                 _lastDutyEvent = "副本已完成";
                 _lastDutyEventTime = DateTime.Now;
@@ -58,7 +52,7 @@ namespace OBSPlugin
         private void CacheDutyTree()
         {
             if (_debugDutyTreeCached) return;
-            _debugDutyTree = ContentFinderConditionExtensions.BuildDutyTree(_data);
+            _debugDutyTree = ContentFinderConditionExtensions.BuildDutyTree(Plugin.DataManager);
             _debugDutyTreeCached = true;
         }
 
@@ -80,9 +74,9 @@ namespace OBSPlugin
 
             ImGui.Separator();
 
-            ImGui.Text($"副本已开始：{_dutyState.IsDutyStarted}");
+            ImGui.Text($"副本已开始：{Plugin.DutyState.IsDutyStarted}");
 
-            var cfc = _dutyState.ContentFinderCondition;
+            var cfc = Plugin.DutyState.ContentFinderCondition;
             if (cfc.IsValid)
             {
                 ImGui.Text($"副本类型：{cfc.Value.ContentType.Value.Name}");

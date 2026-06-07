@@ -46,29 +46,27 @@ namespace OBSPlugin
             Plugin = plugin;
 
             // Create BlurManager
-            _blurManager = new BlurManager(Plugin.PluginLog, Plugin.obsConnection.OBS, Config);
+            _blurManager = new BlurManager(Plugin.obsConnection.OBS, Config);
 
             // Create UIGameStateTracker
-            _uiGameStateTracker = new UIGameStateTracker(Config, Plugin.GameGui, Plugin.ObjectTable, _blurManager, Plugin.PluginLog);
+            _uiGameStateTracker = new UIGameStateTracker(Config, Plugin.GameGui, Plugin.ObjectTable, _blurManager);
 
             // Create RecordDirManager
             _recordDirManager = new RecordDirManager(
                 Config,
                 Plugin.ClientState,
-                Plugin.Data,
                 Plugin.obsConnection.OBS,
                 Plugin.obsConnection.ObsRecordStatus,
-                Plugin.obsConnection.ObsReplayBufferStatus,
-                Plugin.PluginLog);
+                Plugin.obsConnection.ObsReplayBufferStatus);
 
             // Create tab instances
-            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
-            _streamTab = new StreamTab(Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
-            _recordTab = new RecordTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat, _recordDirManager.SetRecordingDir);
-            _replayTab = new ReplayTab(Config, Plugin.obsConnection, Plugin.PluginLog, Plugin.Chat);
-            _blurTab = new BlurTab(Config, _blurManager, Plugin.PluginLog);
-            _aboutTab = new AboutTab(Plugin.PluginLog);
-            _debugTab = new DebugTab(Config, Plugin.DutyState, Plugin.Data, Plugin.PluginLog, Plugin.Chat);
+            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Plugin.Chat);
+            _streamTab = new StreamTab(Plugin.obsConnection, Plugin.Chat);
+            _recordTab = new RecordTab(Config, Plugin.obsConnection, Plugin.Chat, _recordDirManager.SetRecordingDir);
+            _replayTab = new ReplayTab(Config, Plugin.obsConnection, Plugin.Chat);
+            _blurTab = new BlurTab(Config, _blurManager);
+            _aboutTab = new AboutTab();
+            _debugTab = new DebugTab(Config, Plugin.Chat);
         }
 
         public void Draw()

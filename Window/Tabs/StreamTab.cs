@@ -10,13 +10,11 @@ namespace OBSPlugin
     public class StreamTab
     {
         private readonly ObsConnection _obsConnection;
-        private readonly IPluginLog _log;
         private readonly IChatGui _chat;
 
-        public StreamTab(ObsConnection obsConnection, IPluginLog log, IChatGui chat)
+        public StreamTab(ObsConnection obsConnection, IChatGui chat)
         {
             _obsConnection = obsConnection;
-            _log = log;
             _chat = chat;
         }
 
@@ -56,7 +54,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    _log.Error("Error on toggle streaming: {0}", e);
+                    Plugin.PluginLog.Error("Error on toggle streaming: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle streaming, check log for details.");
                 }
             }

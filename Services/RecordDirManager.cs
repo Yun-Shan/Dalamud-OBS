@@ -13,28 +13,22 @@ namespace OBSPlugin
     {
         private readonly Configuration _config;
         private readonly IClientState _clientState;
-        private readonly IDataManager _data;
         private readonly OBSWebsocket _obs;
         private readonly OutputState _obsRecordStatus;
         private readonly OutputState _obsReplayBufferStatus;
-        private readonly IPluginLog _log;
 
         public RecordDirManager(
             Configuration config,
             IClientState clientState,
-            IDataManager data,
             OBSWebsocket obs,
             OutputState obsRecordStatus,
-            OutputState obsReplayBufferStatus,
-            IPluginLog log)
+            OutputState obsReplayBufferStatus)
         {
             _config = config;
             _clientState = clientState;
-            _data = data;
             _obs = obs;
             _obsRecordStatus = obsRecordStatus;
             _obsReplayBufferStatus = obsReplayBufferStatus;
-            _log = log;
         }
 
         public void SetRecordingDir()
@@ -50,11 +44,11 @@ namespace OBSPlugin
 
                 if (_config.UseDutyName)
                 {
-                    var territory = _data.GetExcelSheet<TerritoryType>().GetRow(terriIdx);
+                    var territory = Plugin.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx);
                     var cfcId = territory.ContentFinderCondition.RowId;
                     if (cfcId > 0)
                     {
-                        var cfc = _data.GetExcelSheet<ContentFinderCondition>().GetRow(cfcId);
+                        var cfc = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>().GetRow(cfcId);
                         folderName = cfc.Name.ToString();
                     }
                     else
@@ -64,7 +58,7 @@ namespace OBSPlugin
                 }
                 else
                 {
-                    var terriName = _data.GetExcelSheet<TerritoryType>().GetRow(terriIdx).Map.Value.PlaceName.Value.Name;
+                    var terriName = Plugin.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx).Map.Value.PlaceName.Value.Name;
                     folderName = terriName.ToString();
                 }
 
@@ -106,14 +100,14 @@ namespace OBSPlugin
                         }
                         catch (ErrorResponseException err)
                         {
-                            _log.Warning("Start replay buffer error: {0}", err);
+                            Plugin.PluginLog.Warning("Start replay buffer error: {0}", err);
                         }
                         leftTimes -= 1;
                         Thread.Sleep(1000);
                     }
                     if (leftTimes == 0)
                     {
-                        _log.Error("Cannot resume replay buffer...");
+                        Plugin.PluginLog.Error("Cannot resume replay buffer...");
                     }
                 }).Start();
             }

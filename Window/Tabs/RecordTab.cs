@@ -16,15 +16,13 @@ namespace OBSPlugin
 
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
-        private readonly IPluginLog _log;
         private readonly IChatGui _chat;
         private readonly Action _setRecordingDir;
 
-        public RecordTab(Configuration config, ObsConnection obsConnection, IPluginLog log, IChatGui chat, Action setRecordingDir)
+        public RecordTab(Configuration config, ObsConnection obsConnection, IChatGui chat, Action setRecordingDir)
         {
             _config = config;
             _obsConnection = obsConnection;
-            _log = log;
             _chat = chat;
             _setRecordingDir = setRecordingDir;
 
@@ -114,7 +112,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    _log.Error("Error on toggle recording: {0}", e);
+                    Plugin.PluginLog.Error("Error on toggle recording: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle recording, check log for details.");
                 }
             }

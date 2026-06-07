@@ -11,14 +11,12 @@ namespace OBSPlugin
     {
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
-        private readonly IPluginLog _log;
         private readonly IChatGui _chat;
 
-        public ReplayTab(Configuration config, ObsConnection obsConnection, IPluginLog log, IChatGui chat)
+        public ReplayTab(Configuration config, ObsConnection obsConnection, IChatGui chat)
         {
             _config = config;
             _obsConnection = obsConnection;
-            _log = log;
             _chat = chat;
         }
 
@@ -58,7 +56,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    _log.Error("Error on toggle replay buffer: {0}", e);
+                    Plugin.PluginLog.Error("Error on toggle replay buffer: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle replay buffer, check log for details.");
                 }
             }
@@ -110,7 +108,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    _log.Error("Error on save replay buffer: {0}", e);
+                    Plugin.PluginLog.Error("Error on save replay buffer: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on save replay buffer, check log for details.");
                 }
             }

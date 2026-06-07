@@ -54,6 +54,8 @@ public void ObsCommand(string command, string args) { ... }
 
 **静态服务注入**：Dalamud 服务通过 `[PluginService]` 属性注入到 `Plugin.cs` 的静态字段。
 
+**约束：PluginService 静态字段必须直接访问**。装饰为 `[PluginService]` 的静态字段（`PluginInterface`、`PluginLog`、`DutyState`、`DataManager`）是单例，在整个插件生命周期内可用。**禁止**通过构造函数参数传递这些服务，必须直接在需要的地方使用 `Plugin.PluginLog`、`Plugin.DutyState` 等静态引用。
+
 **模糊异步管道**：`PluginUI` 使用 `BlockingCollection<Blur>` 队列进行添加/删除操作，由专用线程消费，与 OBS 异步通信。
 
 **OBS通信**：使用 `lib/obs-websocket-dotnet` 子模块中的 `OBSWebsocket`。
