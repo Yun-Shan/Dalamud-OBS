@@ -21,7 +21,7 @@ namespace OBSPlugin
     //         var isViewingCutScene = false;
     //         do
     //         {
-    //             _cts.Token.ThrowIfCancellationRequested();
+    //             _cts!.Token.ThrowIfCancellationRequested();
     //             await Task.Delay(1000);
     //             delay -= 1;
     //             isViewingCutScene = await Framework.RunOnFrameworkThread(() => this.ObjectTable.LocalPlayer?.OnlineStatus.RowId == 15);
@@ -54,7 +54,7 @@ namespace OBSPlugin
         private readonly Action _setRecordingDir;
         private readonly Action _resetReplayBufferRecordingDir;
 
-        private CancellationTokenSource _cts = new();
+        private CancellationTokenSource? _cts = new();
         private bool _stoppingRecord = false;
 
         public CombatState CombatState => _combatState;
@@ -121,7 +121,7 @@ namespace OBSPlugin
                                 var delay = _config.SaveReplayBufferOnCombatDelay;
                                 do
                                 {
-                                    _cts.Token.ThrowIfCancellationRequested();
+                                    _cts!.Token.ThrowIfCancellationRequested();
                                     Thread.Sleep(1000);
                                     delay -= 1;
                                 } while (delay > 0);
@@ -220,7 +220,7 @@ namespace OBSPlugin
 
                 do
                 {
-                    _cts.Token.ThrowIfCancellationRequested();
+                    _cts!.Token.ThrowIfCancellationRequested();
                     await Task.Delay(1000);
                     delay -= 1;
                     isViewingCutScene = await _framework.RunOnFrameworkThread(() => this._objectTable.LocalPlayer?.OnlineStatus.RowId == 15);
@@ -237,7 +237,7 @@ namespace OBSPlugin
             finally
             {
                 _stoppingRecord = false;
-                _cts.Dispose();
+                _cts?.Dispose();
                 _cts = new CancellationTokenSource();
             }
         }

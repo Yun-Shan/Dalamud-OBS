@@ -70,7 +70,7 @@ namespace OBSPlugin.Services
         private IntPtr CountdownTimerFunc(ulong value)
         {
             _countDown = value;
-            return _countdownTimerHook.Original(value);
+            return _countdownTimerHook!.Original(value);
         }
 
         public void Update()

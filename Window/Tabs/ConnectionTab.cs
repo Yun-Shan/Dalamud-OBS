@@ -71,8 +71,8 @@ namespace OBSPlugin
             if (_obsConnection.Connected)
             {
                 ImGui.Separator();
-                ImGui.Text("OBS 插件版本：" + _obsConnection.VersionInfo.PluginVersion);
-                ImGui.Text("OBS 版本：" + _obsConnection.VersionInfo.OBSStudioVersion);
+                ImGui.Text("OBS 插件版本：" + (_obsConnection.VersionInfo?.PluginVersion ?? "未知"));
+                ImGui.Text("OBS 版本：" + (_obsConnection.VersionInfo?.OBSStudioVersion ?? "未知"));
             }
         }
     }
