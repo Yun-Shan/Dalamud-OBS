@@ -10,13 +10,11 @@ namespace OBSPlugin
     {
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
-        private readonly IChatGui _chat;
 
-        public ConnectionTab(Configuration config, ObsConnection obsConnection, IChatGui chat)
+        public ConnectionTab(Configuration config, ObsConnection obsConnection)
         {
             _config = config;
             _obsConnection = obsConnection;
-            _chat = chat;
         }
 
         public void Draw()

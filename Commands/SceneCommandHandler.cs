@@ -1,5 +1,4 @@
 using System;
-using Dalamud.Plugin.Services;
 using OBSWebsocketDotNet;
 
 namespace OBSPlugin
@@ -7,15 +6,13 @@ namespace OBSPlugin
     public class SceneCommandHandler
     {
         private readonly IOBSWebsocket _obs;
-        private readonly IChatGui _chat;
 
-        public SceneCommandHandler(IOBSWebsocket obs, IChatGui chat)
+        public SceneCommandHandler(IOBSWebsocket obs)
         {
             _obs = obs;
-            _chat = chat;
         }
 
-        public void HandleSceneCommand(string args, IChatGui chat)
+        public void HandleSceneCommand(string args)
         {
             const string changeKeyword = "change";
 
@@ -23,7 +20,7 @@ namespace OBSPlugin
 
             if (firstSpaceIndex == -1)
             {
-                chat.PrintError("[OBSPlugin] Valid subcommand is 'change <scene_name>'");
+                Svc.Chat.PrintError("[OBSPlugin] Valid subcommand is 'change <scene_name>'");
                 return;
             }
 
@@ -32,18 +29,18 @@ namespace OBSPlugin
 
             if (!command.Equals(changeKeyword))
             {
-                chat.PrintError("[OBSPlugin] Valid subcommand is 'change <scene_name>'");
+                Svc.Chat.PrintError("[OBSPlugin] Valid subcommand is 'change <scene_name>'");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(sceneName))
             {
-                chat.PrintError("[OBSPlugin] Please provide a scene name to change to.");
+                Svc.Chat.PrintError("[OBSPlugin] Please provide a scene name to change to.");
                 return;
             }
 
             _obs.SetCurrentProgramScene(sceneName);
-            chat.Print($"[OBSPlugin] Scene changed to {sceneName}.");
+            Svc.Chat.Print($"[OBSPlugin] Scene changed to {sceneName}.");
         }
     }
 }

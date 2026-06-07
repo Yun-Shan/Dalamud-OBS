@@ -49,7 +49,7 @@ namespace OBSPlugin
             _blurManager = new BlurManager(Plugin.obsConnection.OBS, Config);
 
             // Create UIGameStateTracker
-            _uiGameStateTracker = new UIGameStateTracker(Config, Svc.GameGui, Svc.ObjectTable, _blurManager);
+            _uiGameStateTracker = new UIGameStateTracker(Config, _blurManager);
 
             // Create RecordDirManager
             _recordDirManager = new RecordDirManager(
@@ -60,13 +60,13 @@ namespace OBSPlugin
                 Plugin.obsConnection.ObsReplayBufferStatus);
 
             // Create tab instances
-            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Svc.Chat);
-            _streamTab = new StreamTab(Plugin.obsConnection, Svc.Chat);
-            _recordTab = new RecordTab(Config, Plugin.obsConnection, Svc.Chat, _recordDirManager.SetRecordingDir);
-            _replayTab = new ReplayTab(Config, Plugin.obsConnection, Svc.Chat);
+            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection);
+            _streamTab = new StreamTab(Plugin.obsConnection);
+            _recordTab = new RecordTab(Config, Plugin.obsConnection, _recordDirManager.SetRecordingDir);
+            _replayTab = new ReplayTab(Config, Plugin.obsConnection);
             _blurTab = new BlurTab(Config, _blurManager);
             _aboutTab = new AboutTab();
-            _debugTab = new DebugTab(Config, Svc.Chat);
+            _debugTab = new DebugTab(Config);
         }
 
         public void Draw()

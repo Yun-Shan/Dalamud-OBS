@@ -13,13 +13,11 @@ namespace OBSPlugin
 {
     public class PluginCommandManager<THost> : IDisposable
     {
-        private readonly ICommandManager commandManager;
         private readonly (string, CommandInfo)[] pluginCommands;
         private readonly THost host;
 
-        public PluginCommandManager(THost host, ICommandManager commandManager)
+        public PluginCommandManager(THost host)
         {
-            this.commandManager = commandManager;
             this.host = host;
 
             this.pluginCommands = host!.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
@@ -39,7 +37,7 @@ namespace OBSPlugin
             for (var i = 0; i < this.pluginCommands.Length; i++)
             {
                 var (command, commandInfo) = this.pluginCommands[i];
-                this.commandManager.AddHandler(command, commandInfo);
+                Svc.Commands.AddHandler(command, commandInfo);
             }
         }
 
@@ -48,7 +46,7 @@ namespace OBSPlugin
             for (var i = 0; i < this.pluginCommands.Length; i++)
             {
                 var (command, _) = this.pluginCommands[i];
-                this.commandManager.RemoveHandler(command);
+                Svc.Commands.RemoveHandler(command);
             }
         }
 

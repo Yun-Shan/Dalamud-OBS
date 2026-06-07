@@ -11,17 +11,15 @@ namespace OBSPlugin
     public class DebugTab
     {
         private readonly Configuration _config;
-        private readonly IChatGui _chat;
 
         private string _lastDutyEvent = "";
         private DateTime _lastDutyEventTime = DateTime.MinValue;
         private OrderedDictionary<string, OrderedDictionary<string, List<Services.ContentEntry>>> _debugDutyTree = new();
         private bool _debugDutyTreeCached = false;
 
-        public DebugTab(Configuration config, IChatGui chat)
+        public DebugTab(Configuration config)
         {
             _config = config;
-            _chat = chat;
             InitDutyEventHandlers();
         }
 

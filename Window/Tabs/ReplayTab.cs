@@ -11,13 +11,11 @@ namespace OBSPlugin
     {
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
-        private readonly IChatGui _chat;
 
-        public ReplayTab(Configuration config, ObsConnection obsConnection, IChatGui chat)
+        public ReplayTab(Configuration config, ObsConnection obsConnection)
         {
             _config = config;
             _obsConnection = obsConnection;
-            _chat = chat;
         }
 
         public void Draw()
@@ -57,7 +55,7 @@ namespace OBSPlugin
                 catch (Exception e)
                 {
                     Svc.PluginLog.Error("Error on toggle replay buffer: {0}", e);
-                    _chat.PrintError("[OBSPlugin] Error on toggle replay buffer, check log for details.");
+                    Svc.Chat.PrintError("[OBSPlugin] Error on toggle replay buffer, check log for details.");
                 }
             }
             ImGui.SameLine(ImGui.GetColumnWidth() - 80);
@@ -109,7 +107,7 @@ namespace OBSPlugin
                 catch (Exception e)
                 {
                     Svc.PluginLog.Error("Error on save replay buffer: {0}", e);
-                    _chat.PrintError("[OBSPlugin] Error on save replay buffer, check log for details.");
+                    Svc.Chat.PrintError("[OBSPlugin] Error on save replay buffer, check log for details.");
                 }
             }
             if (_obsConnection.ObsReplayBufferStatus != OutputState.OBS_WEBSOCKET_OUTPUT_STARTED)

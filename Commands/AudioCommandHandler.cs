@@ -1,25 +1,22 @@
 using System;
 using OBSWebsocketDotNet;
-using Dalamud.Plugin.Services;
 
 namespace OBSPlugin
 {
     public class AudioCommandHandler
     {
         private readonly IOBSWebsocket _obs;
-        private readonly IChatGui _chat;
 
-        public AudioCommandHandler(IOBSWebsocket obs, IChatGui chat)
+        public AudioCommandHandler(IOBSWebsocket obs)
         {
             _obs = obs;
-            _chat = chat;
         }
 
-        public void HandleAudioCommand(string args, IChatGui chat)
+        public void HandleAudioCommand(string args)
         {
             if (string.IsNullOrWhiteSpace(args))
             {
-                chat.PrintError("[OBSPlugin] Command requires a subcommand followed by an audio device name: 'mute <device_name>' or 'unmute <device_name>'.");
+                Svc.Chat.PrintError("[OBSPlugin] Command requires a subcommand followed by an audio device name: 'mute <device_name>' or 'unmute <device_name>'.");
                 return;
             }
 
@@ -38,7 +35,7 @@ namespace OBSPlugin
             {
                 if (string.IsNullOrWhiteSpace(systemName))
                 {
-                    chat.PrintError("[OBSPlugin] Audio commands need an audio device name to function.");
+                    Svc.Chat.PrintError("[OBSPlugin] Audio commands need an audio device name to function.");
                     return;
                 }
 
@@ -46,18 +43,18 @@ namespace OBSPlugin
                 {
                     case "mute":
                         _obs.SetInputMute(systemName, true);
-                        chat.Print($"[OBSPlugin] Muted {systemName}.");
+                        Svc.Chat.Print($"[OBSPlugin] Muted {systemName}.");
                         break;
 
                     case "unmute":
                         _obs.SetInputMute(systemName, false);
-                        chat.Print($"[OBSPlugin] Unmuted {systemName}.");
+                        Svc.Chat.Print($"[OBSPlugin] Unmuted {systemName}.");
                         break;
                 }
             }
             else
             {
-                chat.PrintError("[OBSPlugin] Valid commands are 'mute <device_name>' and 'unmute <device_name>'.");
+                Svc.Chat.PrintError("[OBSPlugin] Valid commands are 'mute <device_name>' and 'unmute <device_name>'.");
             }
         }
     }

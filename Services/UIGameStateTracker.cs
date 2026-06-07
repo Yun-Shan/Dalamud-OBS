@@ -12,17 +12,13 @@ namespace OBSPlugin
     public class UIGameStateTracker
     {
         private readonly Configuration _config;
-        private readonly IGameGui _gameGui;
-        private readonly IObjectTable _objectTable;
         private readonly BlurManager _blurManager;
 
         Blur[] PartyMemberBlurList = new Blur[8];
 
-        public UIGameStateTracker(Configuration config, IGameGui gameGui, IObjectTable objectTable, BlurManager blurManager)
+        public UIGameStateTracker(Configuration config, BlurManager blurManager)
         {
             _config = config;
-            _gameGui = gameGui;
-            _objectTable = objectTable;
             _blurManager = blurManager;
         }
 
@@ -30,7 +26,7 @@ namespace OBSPlugin
         {
             if (!_config.Enabled) return;
             if (!_config.EnableBlur) return;
-            if (_objectTable.LocalPlayer == null) return;
+            if (Svc.ObjectTable.LocalPlayer == null) return;
             try
             {
                 UpdateChatLog();
@@ -233,7 +229,7 @@ namespace OBSPlugin
 
         private unsafe void UpdateChatLogPanel(string ChatLogWindowName, bool followUI = true)
         {
-            var chatLog = _gameGui.GetAddonByName(ChatLogWindowName, 1);
+            var chatLog = Svc.GameGui.GetAddonByName(ChatLogWindowName, 1);
             if (chatLog.IsNull) return;
             unsafe
             {
@@ -248,7 +244,7 @@ namespace OBSPlugin
         private unsafe Dictionary<string, bool> GetChatLogPanelVisiblity()
         {
 
-            var chatLog = _gameGui.GetAddonByName("ChatLog", 1);
+            var chatLog = Svc.GameGui.GetAddonByName("ChatLog", 1);
             if (chatLog.IsNull) throw new Exception("ChatLog get faild!");
             unsafe
             {
@@ -270,7 +266,7 @@ namespace OBSPlugin
             if (!_config.PartyListBlur) return;
             HashSet<string> existingBlur = new();
             uint partyMemberCount = 0;
-            var partyList = _gameGui.GetAddonByName("_PartyList", 1);
+            var partyList = Svc.GameGui.GetAddonByName("_PartyList", 1);
             if (partyList.IsNull) return;
             unsafe
             {
@@ -319,7 +315,7 @@ namespace OBSPlugin
             if (!_config.NamePlateBlur) return;
             Dictionary<string, Blur> namePlateBlurMap = new();
             HashSet<string> existingBlur = new();
-            var namePlate = _gameGui.GetAddonByName("NamePlate", 1);
+            var namePlate = Svc.GameGui.GetAddonByName("NamePlate", 1);
             if (namePlate.IsNull) return;
             unsafe
             {
@@ -367,14 +363,14 @@ namespace OBSPlugin
             if (!_config.TargetBlur && !_config.TargetTargetBlur) return;
             Blur? targetBlur = null;
             Blur? targetTargetBlur = null;
-            var targetInfo = _gameGui.GetAddonByName("_TargetInfo", 1);
+            var targetInfo = Svc.GameGui.GetAddonByName("_TargetInfo", 1);
             if (targetInfo.IsNull) return;
             unsafe
             {
                 var targetInfoPtr = (AtkUnitBase*)targetInfo.Address;
                 if (!GetNodeVisible(targetInfoPtr->UldManager.NodeList[0]))
                 {
-                    targetInfo = _gameGui.GetAddonByName("_TargetInfoMainTarget", 1);
+                    targetInfo = Svc.GameGui.GetAddonByName("_TargetInfoMainTarget", 1);
                     if (!targetInfo.IsNull)
                     {
                         targetInfoPtr = (AtkUnitBase*)targetInfo.Address;
@@ -448,7 +444,7 @@ namespace OBSPlugin
         {
             if (!_config.FocusTargetBlur) return;
             Blur? focusTargetBlur = null;
-            var focusTargetInfo = _gameGui.GetAddonByName("_FocusTargetInfo", 1);
+            var focusTargetInfo = Svc.GameGui.GetAddonByName("_FocusTargetInfo", 1);
             if (focusTargetInfo.IsNull) return;
             unsafe
             {
@@ -481,8 +477,8 @@ namespace OBSPlugin
         private unsafe void UpdateCharacter()
         {
             if (!_config.CharacterBlur) return;
-            var character = _gameGui.GetAddonByName("Character", 1);
-            var characterProfile = _gameGui.GetAddonByName("CharacterProfile", 1);
+            var character = Svc.GameGui.GetAddonByName("Character", 1);
+            var characterProfile = Svc.GameGui.GetAddonByName("CharacterProfile", 1);
             if (!character.IsNull)
             {
                 unsafe
@@ -512,7 +508,7 @@ namespace OBSPlugin
         private unsafe void UpdateFridendList()
         {
             if (!_config.FriendListBlur) return;
-            var friendList = _gameGui.GetAddonByName("FriendList", 1);
+            var friendList = Svc.GameGui.GetAddonByName("FriendList", 1);
             if (friendList.IsNull) return;
             unsafe
             {
@@ -529,7 +525,7 @@ namespace OBSPlugin
             foreach (var i in _config.BlurredHotbars)
             {
                 var suffix = (i - 1).ToString("00");
-                var hotbar = _gameGui.GetAddonByName($"_ActionBar{(suffix == "00" ? string.Empty : suffix)}", 1);
+                var hotbar = Svc.GameGui.GetAddonByName($"_ActionBar{(suffix == "00" ? string.Empty : suffix)}", 1);
                 if (hotbar.IsNull) return;
                 unsafe
                 {
@@ -543,7 +539,7 @@ namespace OBSPlugin
         private unsafe void UpdateCastBar()
         {
             if (!_config.CastBarBlur) return;
-            var castbar = _gameGui.GetAddonByName("_CastBar", 1);
+            var castbar = Svc.GameGui.GetAddonByName("_CastBar", 1);
             if (castbar.IsNull) return;
             unsafe
             {
@@ -555,7 +551,7 @@ namespace OBSPlugin
 
         private unsafe void UpdateCustomAddon(String addonName)
         {
-            var addon = _gameGui.GetAddonByName(addonName, 1);
+            var addon = Svc.GameGui.GetAddonByName(addonName, 1);
             if (addon.IsNull) return;
             unsafe
             {

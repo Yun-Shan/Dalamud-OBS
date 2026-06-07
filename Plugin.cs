@@ -51,11 +51,11 @@ namespace OBSPlugin
 
             obsConnection = new ObsConnection(this.config, Svc.Chat, Svc.ClientState);
 
-            _replayCommandHandler = new ReplayCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.ObsReplayBufferStatus);
-            _streamCommandHandler = new StreamCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.OBS.GetStreamStatus);
-            _recordCommandHandler = new RecordCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.OBS.GetRecordStatus);
-            _audioCommandHandler = new AudioCommandHandler(obsConnection.OBS, Svc.Chat);
-            _sceneCommandHandler = new SceneCommandHandler(obsConnection.OBS, Svc.Chat);
+            _replayCommandHandler = new ReplayCommandHandler(obsConnection.OBS, obsConnection.ObsReplayBufferStatus);
+            _streamCommandHandler = new StreamCommandHandler(obsConnection.OBS, obsConnection.OBS.GetStreamStatus);
+            _recordCommandHandler = new RecordCommandHandler(obsConnection.OBS, obsConnection.OBS.GetRecordStatus);
+            _audioCommandHandler = new AudioCommandHandler(obsConnection.OBS);
+            _sceneCommandHandler = new SceneCommandHandler(obsConnection.OBS);
 
             this.ui = new PluginUI(this);
             PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
@@ -80,7 +80,7 @@ namespace OBSPlugin
             this.stopWatchHook = new OBSPlugin.Services.StopWatchHook(combatState, Svc.SigScanner, Svc.Condition, Svc.GameInteropProvider);
 
             Svc.PluginLog.Information("stopWatchHook");
-            var commandManager = new PluginCommandManager<Plugin>(this, Svc.Commands);
+            var commandManager = new PluginCommandManager<Plugin>(this);
 
             if (config.Password.Length > 0)
             {
@@ -141,27 +141,27 @@ namespace OBSPlugin
 
                 case "replay":
                     if (!obsConnection.Connected) break;
-                    _replayCommandHandler.HandleReplayCommand(commandArgs, Svc.Chat);
+                    _replayCommandHandler.HandleReplayCommand(commandArgs);
                     break;
 
                 case "stream":
                     if (!obsConnection.Connected) break;
-                    _streamCommandHandler.HandleStreamCommand(commandArgs, Svc.Chat);
+                    _streamCommandHandler.HandleStreamCommand(commandArgs);
                     break;
 
                 case "record":
                     if (!obsConnection.Connected) break;
-                    _recordCommandHandler.HandleRecordCommand(commandArgs, Svc.Chat);
+                    _recordCommandHandler.HandleRecordCommand(commandArgs);
                     break;
 
                 case "audio":
                     if (!obsConnection.Connected) break;
-                    _audioCommandHandler.HandleAudioCommand(commandArgs, Svc.Chat);
+                    _audioCommandHandler.HandleAudioCommand(commandArgs);
                     break;
 
                 case "scene":
                     if (!obsConnection.Connected) break;
-                    _sceneCommandHandler.HandleSceneCommand(commandArgs, Svc.Chat);
+                    _sceneCommandHandler.HandleSceneCommand(commandArgs);
                     break;
 
                 default:

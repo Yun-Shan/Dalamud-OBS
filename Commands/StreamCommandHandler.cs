@@ -1,5 +1,4 @@
 using System;
-using Dalamud.Plugin.Services;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 
@@ -8,21 +7,19 @@ namespace OBSPlugin
     public class StreamCommandHandler
     {
         private readonly IOBSWebsocket _obs;
-        private readonly IChatGui _chat;
         private readonly Func<OutputStatus> _getStreamStatus;
 
-        public StreamCommandHandler(IOBSWebsocket obs, IChatGui chat, Func<OutputStatus> getStreamStatus)
+        public StreamCommandHandler(IOBSWebsocket obs, Func<OutputStatus> getStreamStatus)
         {
             _obs = obs;
-            _chat = chat;
             _getStreamStatus = getStreamStatus;
         }
 
-        public void HandleStreamCommand(string args, IChatGui chat)
+        public void HandleStreamCommand(string args)
         {
             if (string.IsNullOrWhiteSpace(args))
             {
-                chat.PrintError("[OBSPlugin] Stream command requires a subcommand: 'start' or 'stop'.");
+                Svc.Chat.PrintError("[OBSPlugin] Stream command requires a subcommand: 'start' or 'stop'.");
                 return;
             }
 
@@ -32,11 +29,11 @@ namespace OBSPlugin
                     if (!_getStreamStatus().IsActive)
                     {
                         _obs.StartStream();
-                        chat.Print("[OBSPlugin] Started stream.");
+                        Svc.Chat.Print("[OBSPlugin] Started stream.");
                     }
                     else
                     {
-                        chat.PrintError("[OBSPlugin] The stream is already active.");
+                        Svc.Chat.PrintError("[OBSPlugin] The stream is already active.");
                     }
                     break;
 
@@ -44,16 +41,16 @@ namespace OBSPlugin
                     if (_getStreamStatus().IsActive)
                     {
                         _obs.StopStream();
-                        chat.Print("[OBSPlugin] Stopped stream.");
+                        Svc.Chat.Print("[OBSPlugin] Stopped stream.");
                     }
                     else
                     {
-                        chat.PrintError("[OBSPlugin] The stream is not active.");
+                        Svc.Chat.PrintError("[OBSPlugin] The stream is not active.");
                     }
                     break;
 
                 default:
-                    chat.PrintError($"[OBSPlugin] '{args}' is not a valid subcommand. Valid subcommands are 'start' or 'stop'.");
+                    Svc.Chat.PrintError($"[OBSPlugin] '{args}' is not a valid subcommand. Valid subcommands are 'start' or 'stop'.");
                     break;
             }
         }
