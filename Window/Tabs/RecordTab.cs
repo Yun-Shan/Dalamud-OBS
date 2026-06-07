@@ -11,8 +11,8 @@ namespace OBSPlugin
 {
     public class RecordTab
     {
-        private static OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> _dutyTree;
-        private static Dictionary<string, (int StartIndex, int Count)> _bitRanges;
+        private static OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>>? _dutyTree;
+        private static Dictionary<string, (int StartIndex, int Count)>? _bitRanges;
 
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
@@ -51,7 +51,7 @@ namespace OBSPlugin
 
         private Configuration.TriState GetL2State(string l1Key, string l2Key)
         {
-            if (!_bitRanges.TryGetValue($"{l1Key}/{l2Key}", out var range)) return Configuration.TriState.Unchecked;
+            if (_bitRanges == null || !_bitRanges.TryGetValue($"{l1Key}/{l2Key}", out var range)) return Configuration.TriState.Unchecked;
             int count = _config.SelectedContents.CountRange(range.StartIndex, range.Count);
             if (count == 0) return Configuration.TriState.Unchecked;
             if (count == range.Count) return Configuration.TriState.Checked;
@@ -60,7 +60,7 @@ namespace OBSPlugin
 
         private Configuration.TriState GetL1State(string l1Key)
         {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return Configuration.TriState.Unchecked;
+            if (_dutyTree == null || !_dutyTree.TryGetValue(l1Key, out var l2Dict)) return Configuration.TriState.Unchecked;
 
             bool hasChecked = false;
             bool hasUnchecked = false;
@@ -198,6 +198,7 @@ namespace OBSPlugin
 
         private void DrawContentTree()
         {
+            if (_dutyTree == null) return;
             foreach (var l1 in _dutyTree)
             {
                 bool isToggleable = l1.Key != "副本" && l1.Key != "多人内容";
@@ -292,7 +293,7 @@ namespace OBSPlugin
 
         private void CascadeL1State(string l1Key, bool checked_)
         {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
+            if (_dutyTree == null || !_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
             foreach (var l2 in l2Dict)
             {
                 CascadeL2State(l1Key, l2.Key, checked_);
@@ -301,7 +302,7 @@ namespace OBSPlugin
 
         private void CascadeL2State(string l1Key, string l2Key, bool checked_)
         {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
+            if (_dutyTree == null || !_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
             if (!l2Dict.TryGetValue(l2Key, out var entries)) return;
             foreach (var entry in entries)
             {

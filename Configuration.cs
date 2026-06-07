@@ -51,7 +51,7 @@ namespace OBSPlugin
         public bool DontStopInCutscene = true;
         public SubFolderModeType SubFolderMode = SubFolderModeType.Territory;
         public FileNameModeType FileNameMode = FileNameModeType.TerritorySuffix;
-        public BitSet SelectedContents;
+        public BitSet SelectedContents = new(0);
         public bool ShowAllFilters = false;
         #endregion
 

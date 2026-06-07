@@ -74,11 +74,11 @@ namespace OBSPlugin.Services
 
     public class BitSetConverter : JsonConverter<BitSet>
     {
-        public override BitSet ReadJson(JsonReader reader, Type objectType, BitSet existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override BitSet ReadJson(JsonReader reader, Type objectType, BitSet? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null) return null;
+            if (reader.TokenType == JsonToken.Null) return null!;
 
-            string base64 = reader.Value as string;
+            string? base64 = reader.Value as string;
             if (string.IsNullOrEmpty(base64))
             {
                 return new BitSet(0);
@@ -94,7 +94,7 @@ namespace OBSPlugin.Services
             return bitSet;
         }
 
-        public override void WriteJson(JsonWriter writer, BitSet value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, BitSet? value, JsonSerializer serializer)
         {
             if (value == null)
             {
