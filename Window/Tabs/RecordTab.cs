@@ -36,13 +36,15 @@ namespace OBSPlugin
             _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(data);
             _bitRanges = new Dictionary<string, (int, int)>();
 
-            int index = 0;
             foreach (var l1 in _dutyTree)
             {
                 foreach (var l2 in l1.Value)
                 {
-                    _bitRanges[$"{l1.Key}/{l2.Key}"] = (index, l2.Value.Count);
-                    index += l2.Value.Count;
+                    if (l2.Value.Count > 0)
+                    {
+                        uint firstRowId = l2.Value[0].RowId;
+                        _bitRanges[$"{l1.Key}/{l2.Key}"] = ((int)firstRowId, l2.Value.Count);
+                    }
                 }
             }
         }
