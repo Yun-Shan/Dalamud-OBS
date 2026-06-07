@@ -205,11 +205,70 @@ namespace OBSPlugin
                     continue;
 
                 ImGui.Indent();
+
+                // L1 tri-state checkbox
+                var l1State = GetL1State(l1.Key);
+                bool l1CheckboxValue = l1State == Configuration.TriState.Checked;
+                string l1CheckboxId = $"##l1_{l1.Key}";
+
+                // For indeterminate, draw a special checkbox with a bullet
+                if (l1State == Configuration.TriState.Indeterminate)
+                {
+                    // Draw checkbox with mixed state indicator
+                    ImGui.Checkbox(l1CheckboxId, ref l1CheckboxValue);
+                    ImGui.SameLine();
+                    ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "[部分]");
+
+                    // Handle click on the partial indicator to cycle through states
+                    if (ImGui.IsItemClicked())
+                    {
+                        CascadeL1State(l1.Key, true);  // Set all to checked
+                        _config.Save();
+                    }
+                }
+                else
+                {
+                    if (ImGui.Checkbox(l1CheckboxId, ref l1CheckboxValue))
+                    {
+                        CascadeL1State(l1.Key, l1CheckboxValue);
+                        _config.Save();
+                    }
+                    ImGui.SameLine();
+                }
+
                 if (ImGui.TreeNode(l1.Key))
                 {
                     foreach (var l2 in l1.Value)
                     {
                         ImGui.Indent();
+
+                        // L2 tri-state checkbox
+                        var l2State = GetL2State(l1.Key, l2.Key);
+                        bool l2CheckboxValue = l2State == Configuration.TriState.Checked;
+                        string l2CheckboxId = $"##l2_{l1.Key}_{l2.Key}";
+
+                        if (l2State == Configuration.TriState.Indeterminate)
+                        {
+                            ImGui.Checkbox(l2CheckboxId, ref l2CheckboxValue);
+                            ImGui.SameLine();
+                            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "[部分]");
+
+                            if (ImGui.IsItemClicked())
+                            {
+                                CascadeL2State(l1.Key, l2.Key, true);
+                                _config.Save();
+                            }
+                        }
+                        else
+                        {
+                            if (ImGui.Checkbox(l2CheckboxId, ref l2CheckboxValue))
+                            {
+                                CascadeL2State(l1.Key, l2.Key, l2CheckboxValue);
+                                _config.Save();
+                            }
+                            ImGui.SameLine();
+                        }
+
                         if (ImGui.TreeNode(l2.Key))
                         {
                             foreach (var entry in l2.Value)
@@ -228,6 +287,25 @@ namespace OBSPlugin
                     ImGui.TreePop();
                 }
                 ImGui.Unindent();
+            }
+        }
+
+        private void CascadeL1State(string l1Key, bool checked_)
+        {
+            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
+            foreach (var l2 in l2Dict)
+            {
+                CascadeL2State(l1Key, l2.Key, checked_);
+            }
+        }
+
+        private void CascadeL2State(string l1Key, string l2Key, bool checked_)
+        {
+            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
+            if (!l2Dict.TryGetValue(l2Key, out var entries)) return;
+            foreach (var entry in entries)
+            {
+                _config.SelectedContents.Set((int)entry.RowId, checked_);
             }
         }
 
