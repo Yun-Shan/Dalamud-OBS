@@ -37,7 +37,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating ChatLog UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating ChatLog UI: {0}", e);
                 _config.ChatLogBlur = false;
                 _config.Save();
             }
@@ -47,7 +47,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating PartyList UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating PartyList UI: {0}", e);
                 _config.PartyListBlur = false;
                 _config.Save();
             }
@@ -57,7 +57,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating Target UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating Target UI: {0}", e);
                 _config.TargetBlur = false;
                 _config.TargetTargetBlur = false;
                 _config.Save();
@@ -68,7 +68,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating FocusTarget UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating FocusTarget UI: {0}", e);
                 _config.FocusTargetBlur = false;
                 _config.Save();
             }
@@ -78,7 +78,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating NamePlate UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating NamePlate UI: {0}", e);
                 _config.NamePlateBlur = false;
                 _config.Save();
             }
@@ -88,7 +88,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating Character UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating Character UI: {0}", e);
                 _config.CharacterBlur = false;
                 _config.Save();
             }
@@ -98,7 +98,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating FriendList UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating FriendList UI: {0}", e);
                 _config.FriendListBlur = false;
                 _config.Save();
             }
@@ -108,7 +108,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating Hotbar UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating Hotbar UI: {0}", e);
                 _config.HotbarBlur = false;
                 _config.Save();
             }
@@ -118,7 +118,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error Updating CastBar UI: {0}", e);
+                Svc.PluginLog.Error("Error Updating CastBar UI: {0}", e);
                 _config.CastBarBlur = false;
                 _config.Save();
             }

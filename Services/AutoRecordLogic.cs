@@ -93,14 +93,14 @@ namespace OBSPlugin
                         }
                         else
                         {
-                            Plugin.PluginLog.Information("Auto start recording");
+                            Svc.PluginLog.Information("Auto start recording");
                             this._setRecordingDir();
                             StartRecordingWithReplayBuffer();
                         }
                     }
                     catch (Exception err)
                     {
-                        Plugin.PluginLog.Warning("Failed to start recording on combat: {0}", err.Message);
+                        Svc.PluginLog.Warning("Failed to start recording on combat: {0}", err.Message);
                     }
                 }
                 else if (!this._combatState.InCombat)
@@ -122,12 +122,12 @@ namespace OBSPlugin
                                     Thread.Sleep(1000);
                                     delay -= 1;
                                 } while (delay > 0);
-                                Plugin.PluginLog.Information("Auto save replay buffer");
+                                Svc.PluginLog.Information("Auto save replay buffer");
                                 _obsConnection.OBS.SaveReplayBuffer();
                             }
                             catch (ErrorResponseException err)
                             {
-                                Plugin.PluginLog.Warning("Stop Recording Error: {0}", err);
+                                Svc.PluginLog.Warning("Stop Recording Error: {0}", err);
                             }
                         }).Start();
                     }
@@ -145,13 +145,13 @@ namespace OBSPlugin
                 {
                     try
                     {
-                        Plugin.PluginLog.Information("Countdown started - auto start recording");
+                        Svc.PluginLog.Information("Countdown started - auto start recording");
                         this._setRecordingDir();
                         StartRecordingWithReplayBuffer();
                     }
                     catch (Exception err)
                     {
-                        Plugin.PluginLog.Warning("Failed to start recording on countdown: {0}", err.Message);
+                        Svc.PluginLog.Warning("Failed to start recording on countdown: {0}", err.Message);
                     }
                 }
                 // Countdown stopped (CountingDown became false)
@@ -162,21 +162,21 @@ namespace OBSPlugin
                     {
                         try
                         {
-                            Plugin.PluginLog.Information("Countdown canceled - auto stop recording");
+                            Svc.PluginLog.Information("Countdown canceled - auto stop recording");
                             _obsConnection.OBS.StopRecord();
                         }
                         catch (ErrorResponseException err)
                         {
-                            Plugin.PluginLog.Warning("Stop Recording Error: {0}", err);
+                            Svc.PluginLog.Warning("Stop Recording Error: {0}", err);
                         }
                     }
                     else
                     {
-                        Plugin.PluginLog.Information("Countdown completed (engage) - keeping recording active");
+                        Svc.PluginLog.Information("Countdown completed (engage) - keeping recording active");
                     }
                 }
                 LastCountdownValue = this._combatState.CountDownValue;
-                Plugin.PluginLog.Debug("lastCountdownValue: {0}", LastCountdownValue);
+                Svc.PluginLog.Debug("lastCountdownValue: {0}", LastCountdownValue);
             });
         }
 
@@ -192,17 +192,17 @@ namespace OBSPlugin
                     try
                     {
                         _obsConnection.OBS.StartReplayBuffer();
-                        Plugin.PluginLog.Information("Started replay buffer with recording");
+                        Svc.PluginLog.Information("Started replay buffer with recording");
                     }
                     catch (ErrorResponseException err)
                     {
-                        Plugin.PluginLog.Debug("Could not start replay buffer: {0}", err.Message);
+                        Svc.PluginLog.Debug("Could not start replay buffer: {0}", err.Message);
                     }
                 }
             }
             catch (ErrorResponseException err)
             {
-                Plugin.PluginLog.Warning("Start Recording Error: {0}", err);
+                Svc.PluginLog.Warning("Start Recording Error: {0}", err);
             }
         }
 
@@ -210,7 +210,7 @@ namespace OBSPlugin
         {
             try
             {
-                Plugin.PluginLog.Information($"Stop recording in {_config.StopRecordOnCombatDelay} seconds");
+                Svc.PluginLog.Information($"Stop recording in {_config.StopRecordOnCombatDelay} seconds");
                 _stoppingRecord = true;
                 var delay = _config.StopRecordOnCombatDelay;
                 var isViewingCutScene = false;
@@ -221,15 +221,15 @@ namespace OBSPlugin
                     await Task.Delay(1000);
                     delay -= 1;
                     isViewingCutScene = await _framework.RunOnFrameworkThread(() => this._objectTable.LocalPlayer?.OnlineStatus.RowId == 15);
-                    Plugin.PluginLog.Information($"isViewingCutScene: {isViewingCutScene}");
+                    Svc.PluginLog.Information($"isViewingCutScene: {isViewingCutScene}");
                 } while (delay > 0 || (_config.DontStopInCutscene && isViewingCutScene));
 
-                Plugin.PluginLog.Information("Auto stop recording");
+                Svc.PluginLog.Information("Auto stop recording");
                 _obsConnection.OBS.StopRecord();
             }
             catch (ErrorResponseException err)
             {
-                Plugin.PluginLog.Warning("Stop Recording Error: {0}", err);
+                Svc.PluginLog.Warning("Stop Recording Error: {0}", err);
             }
             finally
             {
@@ -248,12 +248,12 @@ namespace OBSPlugin
             {
                 try
                 {
-                    Plugin.PluginLog.Information("Zone changed - auto stop recording");
+                    Svc.PluginLog.Information("Zone changed - auto stop recording");
                     _obsConnection.OBS.StopRecord();
                 }
                 catch (ErrorResponseException err)
                 {
-                    Plugin.PluginLog.Warning("Stop Recording Error: {0}", err);
+                    Svc.PluginLog.Warning("Stop Recording Error: {0}", err);
                 }
             }
 
@@ -268,7 +268,7 @@ namespace OBSPlugin
                 }
                 else
                 {
-                    Plugin.PluginLog.Debug("Recording is active, cannot reset replay buffer dir.");
+                    Svc.PluginLog.Debug("Recording is active, cannot reset replay buffer dir.");
                 }
             }
         }

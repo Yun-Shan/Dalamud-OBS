@@ -44,11 +44,11 @@ namespace OBSPlugin
 
                 if (_config.UseDutyName)
                 {
-                    var territory = Plugin.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx);
+                    var territory = Svc.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx);
                     var cfcId = territory.ContentFinderCondition.RowId;
                     if (cfcId > 0)
                     {
-                        var cfc = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>().GetRow(cfcId);
+                        var cfc = Svc.DataManager.GetExcelSheet<ContentFinderCondition>().GetRow(cfcId);
                         folderName = cfc.Name.ToString();
                     }
                     else
@@ -58,7 +58,7 @@ namespace OBSPlugin
                 }
                 else
                 {
-                    var terriName = Plugin.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx).Map.Value.PlaceName.Value.Name;
+                    var terriName = Svc.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx).Map.Value.PlaceName.Value.Name;
                     folderName = terriName.ToString();
                 }
 
@@ -100,14 +100,14 @@ namespace OBSPlugin
                         }
                         catch (ErrorResponseException err)
                         {
-                            Plugin.PluginLog.Warning("Start replay buffer error: {0}", err);
+                            Svc.PluginLog.Warning("Start replay buffer error: {0}", err);
                         }
                         leftTimes -= 1;
                         Thread.Sleep(1000);
                     }
                     if (leftTimes == 0)
                     {
-                        Plugin.PluginLog.Error("Cannot resume replay buffer...");
+                        Svc.PluginLog.Error("Cannot resume replay buffer...");
                     }
                 }).Start();
             }

@@ -54,7 +54,7 @@ namespace OBSPlugin
                         OBSAddOrUpdateBlur(blur);
                     }
                 }
-                Plugin.PluginLog.Information("No more OBS blurs to add.");
+                Svc.PluginLog.Information("No more OBS blurs to add.");
             });
 
         }
@@ -77,7 +77,7 @@ namespace OBSPlugin
                         OBSRemoveBlur(blur);
                     }
                 }
-                Plugin.PluginLog.Information("No more OBS blurs to add.");
+                Svc.PluginLog.Information("No more OBS blurs to add.");
             });
         }
 
@@ -128,17 +128,17 @@ namespace OBSPlugin
                 {
                     _config.UIDetection = false;
                     var errMsg = $"Cannot find source \"{_config.SourceName}\", please check.";
-                    Plugin.PluginLog.Error(errMsg);
+                    Svc.PluginLog.Error(errMsg);
                     _config.Save();
                 }
                 return false;
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Failed updating blur: {0}", e);
+                Svc.PluginLog.Error("Failed updating blur: {0}", e);
                 return false;
             }
-            Plugin.PluginLog.Debug("Updated blur: {0} {1} ({2}, {3}, {4}, {5})", blur.Name, blur.Enabled, blur.Top, blur.Bottom, blur.Left, blur.Right);
+            Svc.PluginLog.Debug("Updated blur: {0} {1} ({2}, {3}, {4}, {5})", blur.Name, blur.Enabled, blur.Top, blur.Bottom, blur.Left, blur.Right);
             return true;
         }
 
@@ -149,11 +149,11 @@ namespace OBSPlugin
             try
             {
                 removed = _obs.RemoveSourceFilter(_config.SourceName, blur.Name);
-                Plugin.PluginLog.Debug("Deleted blur: {0}", blur.Name);
+                Svc.PluginLog.Debug("Deleted blur: {0}", blur.Name);
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Failed deleting blur: {0}", e);
+                Svc.PluginLog.Error("Failed deleting blur: {0}", e);
                 return false;
             }
             return removed;
@@ -172,11 +172,11 @@ namespace OBSPlugin
                         _obs.RemoveSourceFilter(_config.SourceName, filter.Name);
                     }
                 }
-                Plugin.PluginLog.Debug("Deleted all blurs starting with {0}", blurNamePrefix);
+                Svc.PluginLog.Debug("Deleted all blurs starting with {0}", blurNamePrefix);
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Failed deleting blurs: {0}", e);
+                Svc.PluginLog.Error("Failed deleting blurs: {0}", e);
                 return false;
             }
             return true;

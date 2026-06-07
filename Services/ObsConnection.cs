@@ -75,7 +75,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Connection error {0}", e);
+                Svc.PluginLog.Error("Connection error {0}", e);
             }
             finally
             {
@@ -86,14 +86,14 @@ namespace OBSPlugin
         private void OnConnect(object? sender, EventArgs e)
         {
             _connected = true;
-            Plugin.PluginLog.Information("OBS connected: {0}", _config.Address);
+            Svc.PluginLog.Information("OBS connected: {0}", _config.Address);
             _versionInfo = _obs.GetVersion();
             var pluginVersion = _versionInfo.PluginVersion;
             var pVersion = new Version(pluginVersion);
             if (pVersion < new Version(MinimumPluginVersion))
             {
                 string errMsg = $"Invalid obs-websocket-plugin version, needs {MinimumPluginVersion}, having {pluginVersion}";
-                Plugin.PluginLog.Error(errMsg);
+                Svc.PluginLog.Error(errMsg);
                 _chat.PrintError($"[OBSPlugin] {errMsg}");
                 _obs.Disconnect();
                 return;
@@ -119,7 +119,7 @@ namespace OBSPlugin
             catch (ErrorResponseException)
             {
                 // Replay buffer not available/enabled in OBS - ignore
-                Plugin.PluginLog.Debug("Replay buffer not available in OBS");
+                Svc.PluginLog.Debug("Replay buffer not available in OBS");
             }
             if (_config.RecordDir.Equals(String.Empty))
             {
@@ -149,7 +149,7 @@ namespace OBSPlugin
                     }
                     catch (Exception ex)
                     {
-                        Plugin.PluginLog.Error("Error getting obs streaming status", ex);
+                        Svc.PluginLog.Error("Error getting obs streaming status", ex);
                     }
                 }
             }, keepAliveToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
@@ -162,7 +162,7 @@ namespace OBSPlugin
 
         private void OnDisconnect(object? sender, ObsDisconnectionInfo e)
         {
-            Plugin.PluginLog.Information("OBS disconnected: {0}", _config.Address);
+            Svc.PluginLog.Information("OBS disconnected: {0}", _config.Address);
             _connected = false;
         }
 

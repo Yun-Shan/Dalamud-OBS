@@ -6,7 +6,6 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using Lumina.Excel.Sheets;
@@ -25,29 +24,9 @@ namespace OBSPlugin
 {
     public class Plugin : IDalamudPlugin
     {
-        // Static services (injected via attribute)
-        [PluginService]
+        // Only PluginInterface stays here
         internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-        [PluginService]
-        internal static IPluginLog PluginLog { get; private set; } = null!;
-        [PluginService]
-        internal static IDutyState DutyState { get; private set; } = null!;
-        [PluginService]
-        internal static IDataManager DataManager { get; private set; } = null!;
 
-        // Instance services (injected via constructor)
-        internal ICommandManager Commands { get; }
-        internal IChatGui Chat { get; }
-        internal IClientState ClientState { get; }
-        internal IObjectTable ObjectTable { get; }
-        internal IFramework Framework { get; }
-        internal IGameGui GameGui { get; }
-        internal ISigScanner SigScanner { get; }
-        internal ICondition Condition { get; }
-        internal IDataManager Data { get; }
-        internal IGameInteropProvider GameInteropProvider { get; }
-
-        internal readonly PluginCommandManager<Plugin> commandManager;
         internal Configuration config { get; private set; }
         internal readonly PluginUI ui;
         internal readonly ObsConnection obsConnection;
@@ -64,39 +43,19 @@ namespace OBSPlugin
 
         public string Name => "OBS Plugin";
 
-        public Plugin(
-            ICommandManager commands,
-            IChatGui chat,
-            IClientState clientState,
-            IObjectTable objectTable,
-            IFramework framework,
-            IGameGui gameGui,
-            ISigScanner sigScanner,
-            ICondition condition,
-            IDataManager data,
-            IGameInteropProvider gameInteropProvider)
+        public Plugin()
         {
-            // Assign injected services
-            Commands = commands;
-            Chat = chat;
-            ClientState = clientState;
-            ObjectTable = objectTable;
-            Framework = framework;
-            GameGui = gameGui;
-            SigScanner = sigScanner;
-            Condition = condition;
-            Data = data;
-            GameInteropProvider = gameInteropProvider;
+            PluginInterface.Create<Svc>();
 
             this.config = (Configuration?)PluginInterface.GetPluginConfig() ?? new Configuration();
 
-            obsConnection = new ObsConnection(this.config, Chat, ClientState);
+            obsConnection = new ObsConnection(this.config, Svc.Chat, Svc.ClientState);
 
-            _replayCommandHandler = new ReplayCommandHandler(obsConnection.OBS, Chat, obsConnection.ObsReplayBufferStatus);
-            _streamCommandHandler = new StreamCommandHandler(obsConnection.OBS, Chat, obsConnection.OBS.GetStreamStatus);
-            _recordCommandHandler = new RecordCommandHandler(obsConnection.OBS, Chat, obsConnection.OBS.GetRecordStatus);
-            _audioCommandHandler = new AudioCommandHandler(obsConnection.OBS, Chat);
-            _sceneCommandHandler = new SceneCommandHandler(obsConnection.OBS, Chat);
+            _replayCommandHandler = new ReplayCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.ObsReplayBufferStatus);
+            _streamCommandHandler = new StreamCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.OBS.GetStreamStatus);
+            _recordCommandHandler = new RecordCommandHandler(obsConnection.OBS, Svc.Chat, obsConnection.OBS.GetRecordStatus);
+            _audioCommandHandler = new AudioCommandHandler(obsConnection.OBS, Svc.Chat);
+            _sceneCommandHandler = new SceneCommandHandler(obsConnection.OBS, Svc.Chat);
 
             this.ui = new PluginUI(this);
             PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
@@ -111,24 +70,24 @@ namespace OBSPlugin
             combatState = new CombatState();
             autoRecordLogic = new AutoRecordLogic(
                 config,
-                Framework,
-                ObjectTable,
+                Svc.Framework,
+                Svc.ObjectTable,
                 obsConnection,
                 combatState,
                 () => this.ui.RecordDirManager.SetRecordingDir(),
                 () => this.ui.RecordDirManager.ResetReplayBufferRecordingDir());
 
-            this.stopWatchHook = new OBSPlugin.Services.StopWatchHook(combatState, SigScanner, Condition, GameInteropProvider);
+            this.stopWatchHook = new OBSPlugin.Services.StopWatchHook(combatState, Svc.SigScanner, Svc.Condition, Svc.GameInteropProvider);
 
-            PluginLog.Information("stopWatchHook");
-            this.commandManager = new PluginCommandManager<Plugin>(this, Commands);
+            Svc.PluginLog.Information("stopWatchHook");
+            var commandManager = new PluginCommandManager<Plugin>(this, Svc.Commands);
 
             if (config.Password.Length > 0)
             {
                 obsConnection.TryConnect(config.Address, config.Password);
             }
 
-            ClientState.TerritoryChanged += tid => autoRecordLogic.OnTerritoryChanged(tid);
+            Svc.ClientState.TerritoryChanged += tid => autoRecordLogic.OnTerritoryChanged(tid);
         }
         private void OpenConfigUi()
         {
@@ -182,31 +141,31 @@ namespace OBSPlugin
 
                 case "replay":
                     if (!obsConnection.Connected) break;
-                    _replayCommandHandler.HandleReplayCommand(commandArgs, Chat);
+                    _replayCommandHandler.HandleReplayCommand(commandArgs, Svc.Chat);
                     break;
 
                 case "stream":
                     if (!obsConnection.Connected) break;
-                    _streamCommandHandler.HandleStreamCommand(commandArgs, Chat);
+                    _streamCommandHandler.HandleStreamCommand(commandArgs, Svc.Chat);
                     break;
 
                 case "record":
                     if (!obsConnection.Connected) break;
-                    _recordCommandHandler.HandleRecordCommand(commandArgs, Chat);
+                    _recordCommandHandler.HandleRecordCommand(commandArgs, Svc.Chat);
                     break;
 
                 case "audio":
                     if (!obsConnection.Connected) break;
-                    _audioCommandHandler.HandleAudioCommand(commandArgs, Chat);
+                    _audioCommandHandler.HandleAudioCommand(commandArgs, Svc.Chat);
                     break;
 
                 case "scene":
                     if (!obsConnection.Connected) break;
-                    _sceneCommandHandler.HandleSceneCommand(commandArgs, Chat);
+                    _sceneCommandHandler.HandleSceneCommand(commandArgs, Svc.Chat);
                     break;
 
                 default:
-                    Chat.PrintError($"[OBSPlugin] {args} is not a valid command.");
+                    Svc.Chat.PrintError($"[OBSPlugin] {args} is not a valid command.");
                     break;
             }
         }
@@ -215,8 +174,6 @@ namespace OBSPlugin
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
-
-            this.commandManager.Dispose();
 
             this.stopWatchHook.Dispose();
 

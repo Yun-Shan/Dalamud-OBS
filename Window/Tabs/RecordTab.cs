@@ -26,7 +26,7 @@ namespace OBSPlugin
             _chat = chat;
             _setRecordingDir = setRecordingDir;
 
-            _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(Plugin.DataManager);
+            _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
             _bitRanges = new Dictionary<string, (int, int)>();
 
             foreach (var l1 in _dutyTree)
@@ -112,7 +112,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    Plugin.PluginLog.Error("Error on toggle recording: {0}", e);
+                    Svc.PluginLog.Error("Error on toggle recording: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle recording, check log for details.");
                 }
             }

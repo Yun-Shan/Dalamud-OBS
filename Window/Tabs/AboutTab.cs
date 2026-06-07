@@ -32,7 +32,7 @@ namespace OBSPlugin
                 }
                 catch (Exception ex)
                 {
-                    Plugin.PluginLog.Error(ex, "Could not open OBS Composite Blur url");
+                    Svc.PluginLog.Error(ex, "Could not open OBS Composite Blur url");
                 }
             }
             ImGui.SameLine();
@@ -60,7 +60,7 @@ namespace OBSPlugin
                 }
                 catch (Exception ex)
                 {
-                    Plugin.PluginLog.Error(ex, "Could not open OBS-websocket url");
+                    Svc.PluginLog.Error(ex, "Could not open OBS-websocket url");
                 }
             }
         }

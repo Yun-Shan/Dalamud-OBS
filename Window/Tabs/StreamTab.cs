@@ -54,7 +54,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    Plugin.PluginLog.Error("Error on toggle streaming: {0}", e);
+                    Svc.PluginLog.Error("Error on toggle streaming: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle streaming, check log for details.");
                 }
             }

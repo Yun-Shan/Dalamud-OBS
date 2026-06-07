@@ -49,24 +49,24 @@ namespace OBSPlugin
             _blurManager = new BlurManager(Plugin.obsConnection.OBS, Config);
 
             // Create UIGameStateTracker
-            _uiGameStateTracker = new UIGameStateTracker(Config, Plugin.GameGui, Plugin.ObjectTable, _blurManager);
+            _uiGameStateTracker = new UIGameStateTracker(Config, Svc.GameGui, Svc.ObjectTable, _blurManager);
 
             // Create RecordDirManager
             _recordDirManager = new RecordDirManager(
                 Config,
-                Plugin.ClientState,
+                Svc.ClientState,
                 Plugin.obsConnection.OBS,
                 Plugin.obsConnection.ObsRecordStatus,
                 Plugin.obsConnection.ObsReplayBufferStatus);
 
             // Create tab instances
-            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Plugin.Chat);
-            _streamTab = new StreamTab(Plugin.obsConnection, Plugin.Chat);
-            _recordTab = new RecordTab(Config, Plugin.obsConnection, Plugin.Chat, _recordDirManager.SetRecordingDir);
-            _replayTab = new ReplayTab(Config, Plugin.obsConnection, Plugin.Chat);
+            _connectionTab = new ConnectionTab(Config, Plugin.obsConnection, Svc.Chat);
+            _streamTab = new StreamTab(Plugin.obsConnection, Svc.Chat);
+            _recordTab = new RecordTab(Config, Plugin.obsConnection, Svc.Chat, _recordDirManager.SetRecordingDir);
+            _replayTab = new ReplayTab(Config, Plugin.obsConnection, Svc.Chat);
             _blurTab = new BlurTab(Config, _blurManager);
             _aboutTab = new AboutTab();
-            _debugTab = new DebugTab(Config, Plugin.Chat);
+            _debugTab = new DebugTab(Config, Svc.Chat);
         }
 
         public void Draw()
@@ -77,7 +77,7 @@ namespace OBSPlugin
             }
             catch (Exception e)
             {
-                Plugin.PluginLog.Error("Error at updating stopwatch: {0}", e);
+                Svc.PluginLog.Error("Error at updating stopwatch: {0}", e);
             }
 
             if (Config.UIDetection)
@@ -172,7 +172,7 @@ namespace OBSPlugin
                 foreach (Blur blur in _blurManager.BlurDict.Values)
                 {
                     blur.Enabled = false;
-                    Plugin.PluginLog.Debug("Turn off {0}", blur.Name);
+                    Svc.PluginLog.Debug("Turn off {0}", blur.Name);
                     Plugin.obsConnection.OBS.RemoveSourceFilter(Config.SourceName, blur.Name);
                 }
             }

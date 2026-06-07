@@ -56,7 +56,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    Plugin.PluginLog.Error("Error on toggle replay buffer: {0}", e);
+                    Svc.PluginLog.Error("Error on toggle replay buffer: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on toggle replay buffer, check log for details.");
                 }
             }
@@ -108,7 +108,7 @@ namespace OBSPlugin
                 }
                 catch (Exception e)
                 {
-                    Plugin.PluginLog.Error("Error on save replay buffer: {0}", e);
+                    Svc.PluginLog.Error("Error on save replay buffer: {0}", e);
                     _chat.PrintError("[OBSPlugin] Error on save replay buffer, check log for details.");
                 }
             }

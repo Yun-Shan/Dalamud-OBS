@@ -27,22 +27,22 @@ namespace OBSPlugin
 
         private void InitDutyEventHandlers()
         {
-            Plugin.DutyState.DutyStarted += _ =>
+            Svc.DutyState.DutyStarted += _ =>
             {
                 _lastDutyEvent = "副本已开始";
                 _lastDutyEventTime = DateTime.Now;
             };
-            Plugin.DutyState.DutyWiped += _ =>
+            Svc.DutyState.DutyWiped += _ =>
             {
                 _lastDutyEvent = "副本已灭团";
                 _lastDutyEventTime = DateTime.Now;
             };
-            Plugin.DutyState.DutyRecommenced += _ =>
+            Svc.DutyState.DutyRecommenced += _ =>
             {
                 _lastDutyEvent = "副本已重开";
                 _lastDutyEventTime = DateTime.Now;
             };
-            Plugin.DutyState.DutyCompleted += _ =>
+            Svc.DutyState.DutyCompleted += _ =>
             {
                 _lastDutyEvent = "副本已完成";
                 _lastDutyEventTime = DateTime.Now;
@@ -52,7 +52,7 @@ namespace OBSPlugin
         private void CacheDutyTree()
         {
             if (_debugDutyTreeCached) return;
-            _debugDutyTree = ContentFinderConditionExtensions.BuildDutyTree(Plugin.DataManager);
+            _debugDutyTree = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
             _debugDutyTreeCached = true;
         }
 
@@ -74,9 +74,9 @@ namespace OBSPlugin
 
             ImGui.Separator();
 
-            ImGui.Text($"副本已开始：{Plugin.DutyState.IsDutyStarted}");
+            ImGui.Text($"副本已开始：{Svc.DutyState.IsDutyStarted}");
 
-            var cfc = Plugin.DutyState.ContentFinderCondition;
+            var cfc = Svc.DutyState.ContentFinderCondition;
             if (cfc.IsValid)
             {
                 ImGui.Text($"副本类型：{cfc.Value.ContentType.Value.Name}");
