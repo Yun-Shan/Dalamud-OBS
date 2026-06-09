@@ -21,8 +21,8 @@ namespace OBSPlugin.Window
 
             if (status == CheckboxStatus.Indeterminate)
             {
-                bool b = false;
-                ret = ImGui.Checkbox(label, ref b);
+                bool isCurrentlyChecked = false;
+                ret = ImGui.Checkbox(label, ref isCurrentlyChecked);
                 if (ret) status = CheckboxStatus.Checked;
 
                 var itemMin = ImGui.GetItemRectMin();
@@ -35,9 +35,9 @@ namespace OBSPlugin.Window
             }
             else
             {
-                bool b = status == CheckboxStatus.Checked;
-                ret = ImGui.Checkbox(label, ref b);
-                if (ret) status = b ? CheckboxStatus.Checked : CheckboxStatus.Unchecked;
+                bool isCurrentlyChecked = status == CheckboxStatus.Checked;
+                ret = ImGui.Checkbox(label, ref isCurrentlyChecked);
+                if (ret) status = isCurrentlyChecked ? CheckboxStatus.Checked : CheckboxStatus.Unchecked;
             }
 
             return ret;
