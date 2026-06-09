@@ -1,24 +1,18 @@
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
-using System.Collections.Generic;
+using OBSPlugin.Window;
 using System.Linq;
 
 namespace OBSPlugin.Services
 {
-    public struct ContentEntry
-    {
-        public string Name;
-        public uint RowId;
-    }
-
     public static class ContentFinderConditionExtensions
     {
-        public static OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> BuildDutyTree(IDataManager data)
+        public static DutyTreeNode BuildDutyTree(IDataManager data)
         {
-            var tree = new OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>>();
+            var root = new DutyTreeNode(DutyTreeNodeType.Root, "Root");
 
             var sheet = data.GetExcelSheet<ContentFinderCondition>();
-            if (sheet == null) return tree;
+            if (sheet == null) return root;
 
             var sortedRows = sheet
                 .OrderBy(row => row.ContentType.Value.RowId)
@@ -31,19 +25,24 @@ namespace OBSPlugin.Services
                 var uiCategory = string.IsNullOrEmpty(row.ContentUICategory.Value.Name.ToString()) ? "未知" : row.ContentUICategory.Value.Name.ToString();
                 var name = string.IsNullOrEmpty(row.Name.ToString()) ? "未知" : row.Name.ToString();
 
-                if (!tree.ContainsKey(contentType))
-                    tree[contentType] = new OrderedDictionary<string, List<ContentEntry>>();
+                var contentTypeNode = root.Children.FirstOrDefault(c => c.Name == contentType);
+                if (contentTypeNode == null)
+                {
+                    contentTypeNode = new DutyTreeNode(DutyTreeNodeType.ContentType, contentType, row.ContentType.RowId, root);
+                    root.Children.Add(contentTypeNode);
+                }
 
-                var uiCategoryDict = tree[contentType];
+                var uiCategoryNode = contentTypeNode.Children.FirstOrDefault(c => c.Name == uiCategory);
+                if (uiCategoryNode == null)
+                {
+                    uiCategoryNode = new DutyTreeNode(DutyTreeNodeType.ContentUICategory, uiCategory, row.ContentUICategory.RowId, contentTypeNode);
+                    contentTypeNode.Children.Add(uiCategoryNode);
+                }
 
-                if (!uiCategoryDict.ContainsKey(uiCategory))
-                    uiCategoryDict[uiCategory] = new List<ContentEntry>();
-
-                var nameList = uiCategoryDict[uiCategory];
-                nameList.Add(new ContentEntry { Name = name, RowId = row.RowId });
+                uiCategoryNode.Children.Add(new DutyTreeNode(DutyTreeNodeType.DutyEntry, name, row.RowId, uiCategoryNode));
             }
 
-            return tree;
+            return root;
         }
     }
 }

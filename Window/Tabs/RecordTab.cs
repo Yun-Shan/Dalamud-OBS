@@ -13,11 +13,11 @@ namespace OBSPlugin
 {
     public class RecordTab
     {
-        private readonly OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> _dutyTree;
+        private readonly DutyTreeNode _dutyTreeRoot;
+        private readonly Action _setRecordingDir;
 
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
-        private readonly Action _setRecordingDir;
 
         public RecordTab(Configuration config, ObsConnection obsConnection, Action setRecordingDir)
         {
@@ -25,48 +25,22 @@ namespace OBSPlugin
             _obsConnection = obsConnection;
             _setRecordingDir = setRecordingDir;
 
-            _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
+            _dutyTreeRoot = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
+            SyncCheckStatusFromConfig();
         }
 
-        private CheckboxStatus GetL2State(string l1Key, string l2Key)
+        private void SyncCheckStatusFromConfig()
         {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return CheckboxStatus.Unchecked;
-            if (!l2Dict.TryGetValue(l2Key, out var entries)) return CheckboxStatus.Unchecked;
-
-            bool hasChecked = false;
-            bool hasUnchecked = false;
-
-            foreach (var entry in entries)
+            foreach (var contentTypeNode in _dutyTreeRoot.Children)
             {
-                if (_config.SelectedContents.Contains(entry.RowId))
-                    hasChecked = true;
-                else
-                    hasUnchecked = true;
-
-                if (hasChecked && hasUnchecked) return CheckboxStatus.Indeterminate;
+                foreach (var uiCategoryNode in contentTypeNode.Children)
+                {
+                    foreach (var entryNode in uiCategoryNode.Children)
+                    {
+                        entryNode.UpdateCheckStatus(_config.FilterDuty.Contains(entryNode.RowId));
+                    }
+                }
             }
-
-            return hasChecked ? CheckboxStatus.Checked : CheckboxStatus.Unchecked;
-        }
-
-        private CheckboxStatus GetL1State(string l1Key)
-        {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return CheckboxStatus.Unchecked;
-
-            bool hasChecked = false;
-            bool hasUnchecked = false;
-
-            foreach (var l2 in l2Dict)
-            {
-                var state = GetL2State(l1Key, l2.Key);
-                if (state == CheckboxStatus.Checked) hasChecked = true;
-                if (state == CheckboxStatus.Unchecked) hasUnchecked = true;
-                if (hasChecked && hasUnchecked) return CheckboxStatus.Indeterminate;
-            }
-
-            if (hasChecked && !hasUnchecked) return CheckboxStatus.Checked;
-            if (!hasChecked && hasUnchecked) return CheckboxStatus.Unchecked;
-            return CheckboxStatus.Indeterminate;
         }
 
         public void Draw()
@@ -94,7 +68,7 @@ namespace OBSPlugin
 
             if (ImGui.Button(obsButtonText))
             {
-                if (!_obsConnection.Connected) return;
+                if (_obsConnection.ObsRecordStatus != OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED) return;
                 try
                 {
                     if (_obsConnection.ObsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED)
@@ -122,6 +96,10 @@ namespace OBSPlugin
         private void DrawRecordingFileGroup()
         {
             ImGui.TextColored(new Vector4(0.54f, 0.71f, 0.97f, 1f), "录制文件");
+
+            ImGui.Text("储存目录");
+            ImGui.SameLine(100);
+            ImGui.InputText("##RecordDir", ref _config.RecordDir);
 
             ImGui.Text("子文件夹");
             ImGui.SameLine(100);
@@ -167,10 +145,9 @@ namespace OBSPlugin
             if (ImGui.Checkbox("倒计时取消时停止录制", ref _config.StopRecordOnCountDownCancel))
                 _config.Save();
 
-            var enableFilter = true;
-            if (ImGui.Checkbox("启用筛选", ref enableFilter))
+            if (ImGui.Checkbox("启用筛选", ref _config.UseDutyFilter))
                 _config.Save();
-            if (enableFilter && ImGui.CollapsingHeader("录制筛选"))
+            if (_config.UseDutyFilter && ImGui.CollapsingHeader("录制筛选"))
             {
                 if (ImGui.Checkbox("显示所有筛选", ref _config.ShowAllFilters))
                     _config.Save();
@@ -181,45 +158,45 @@ namespace OBSPlugin
 
         private void DrawContentTree()
         {
-            foreach (var l1 in _dutyTree)
+            foreach (var contentTypeNode in _dutyTreeRoot.Children)
             {
-                bool isToggleable = l1.Key != "大型任务" && l1.Key != "绝境战";
+                bool isToggleable = contentTypeNode.Name != "大型任务" && contentTypeNode.Name != "绝境战";
                 if (isToggleable && !_config.ShowAllFilters)
                     continue;
 
-                var l1State = GetL1State(l1.Key);
-                string l1CheckboxId = $"##l1_{l1.Key}";
-                if (UiHelper.Checkbox(l1CheckboxId, ref l1State))
+                string checkboxId = $"##l1_{contentTypeNode.Name}";
+                CheckboxStatus contentTypeStatus = contentTypeNode.CheckStatus;
+                if (UiHelper.Checkbox(checkboxId, ref contentTypeStatus))
                 {
-                    CascadeL1State(l1.Key, l1State != CheckboxStatus.Checked);
+                    contentTypeNode.UpdateCheckStatus(contentTypeStatus != CheckboxStatus.Unchecked);
+                    SyncConfigFromTree();
                     _config.Save();
                 }
                 ImGui.SameLine();
 
-                if (ImGui.TreeNode(l1.Key))
+                if (ImGui.TreeNode(contentTypeNode.Name))
                 {
-                    foreach (var l2 in l1.Value)
+                    foreach (var uiCategoryNode in contentTypeNode.Children)
                     {
-                        var l2State = GetL2State(l1.Key, l2.Key);
-                        string l2CheckboxId = $"##l2_{l1.Key}_{l2.Key}";
-                        if (UiHelper.Checkbox(l2CheckboxId, ref l2State))
+                        checkboxId = $"##l2_{uiCategoryNode.Name}";
+                        CheckboxStatus uiCategoryStatus = uiCategoryNode.CheckStatus;
+                        if (UiHelper.Checkbox(checkboxId, ref uiCategoryStatus))
                         {
-                            CascadeL2State(l1.Key, l2.Key, l2State != CheckboxStatus.Checked);
+                            uiCategoryNode.UpdateCheckStatus(uiCategoryStatus != CheckboxStatus.Unchecked);
+                            SyncConfigFromTree();
                             _config.Save();
                         }
                         ImGui.SameLine();
 
-                        if (ImGui.TreeNode(l2.Key))
+                        if (ImGui.TreeNode(uiCategoryNode.Name))
                         {
-                            foreach (var entry in l2.Value)
+                            foreach (var entryNode in uiCategoryNode.Children)
                             {
-                                bool selected = _config.SelectedContents.Contains(entry.RowId);
-                                if (ImGui.Checkbox(entry.Name, ref selected))
+                                bool selected = entryNode.CheckStatus == CheckboxStatus.Checked;
+                                if (ImGui.Checkbox(entryNode.Name, ref selected))
                                 {
-                                    if (selected)
-                                        _config.SelectedContents.Add(entry.RowId);
-                                    else
-                                        _config.SelectedContents.Remove(entry.RowId);
+                                    entryNode.UpdateCheckStatus(selected);
+                                    SyncConfigFromTree();
                                     _config.Save();
                                 }
                             }
@@ -231,29 +208,19 @@ namespace OBSPlugin
             }
         }
 
-        private void CascadeL1State(string l1Key, bool check)
+        private void SyncConfigFromTree()
         {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
-            foreach (var l2 in l2Dict)
+            _config.FilterDuty.Clear();
+            foreach (var contentTypeNode in _dutyTreeRoot.Children)
             {
-                CascadeL2State(l1Key, l2.Key, check);
-            }
-        }
-
-        private void CascadeL2State(string l1Key, string l2Key, bool check)
-        {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
-            if (!l2Dict.TryGetValue(l2Key, out var entries)) return;
-
-            if (check)
-            {
-                foreach (var entry in entries)
-                    _config.SelectedContents.Add(entry.RowId);
-            }
-            else
-            {
-                foreach (var entry in entries)
-                    _config.SelectedContents.Remove(entry.RowId);
+                foreach (var uiCategoryNode in contentTypeNode.Children)
+                {
+                    foreach (var entryNode in uiCategoryNode.Children)
+                    {
+                        if (entryNode.CheckStatus == CheckboxStatus.Checked)
+                            _config.FilterDuty.Add(entryNode.RowId);
+                    }
+                }
             }
         }
 

@@ -1,11 +1,12 @@
 using Dalamud.Plugin.Services;
+using Lumina.Excel.Sheets;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Lumina.Excel.Sheets;
+using static OBSPlugin.Configuration;
 
 namespace OBSPlugin
 {
@@ -37,32 +38,46 @@ namespace OBSPlugin
             if (_clientState == null || _clientState.TerritoryType == 0) return;
 
             var curDir = _config.RecordDir;
-            if (_config.IncludeTerritory && _obsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED)
+            if (_obsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED)
             {
                 var terriIdx = _clientState.TerritoryType;
-                string folderName;
-
-                if (_config.UseDutyName)
+                string? folderName = null;
+                switch (_config.SubFolderMode)
                 {
-                    var territory = Svc.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx);
-                    var cfcId = territory.ContentFinderCondition.RowId;
-                    if (cfcId > 0)
-                    {
-                        var cfc = Svc.DataManager.GetExcelSheet<ContentFinderCondition>().GetRow(cfcId);
-                        folderName = cfc.Name.ToString();
-                    }
-                    else
-                    {
-                        folderName = territory.Map.Value.PlaceName.Value.Name.ToString();
-                    }
-                }
-                else
-                {
-                    var terriName = Svc.DataManager.GetExcelSheet<TerritoryType>().GetRow(terriIdx).Map.Value.PlaceName.Value.Name;
-                    folderName = terriName.ToString();
+                    case SubFolderModeType.ContentName:
+                        if (Svc.DutyState.ContentFinderCondition.IsValid)
+                        {
+                            folderName = Svc.DutyState.ContentFinderCondition.Value.Name.ToString();
+                            if (string.IsNullOrEmpty(folderName)) folderName = "未知副本";
+                        }
+                        else
+                        {
+                            folderName = "未知副本";
+                        }
+                        break;
+                    case SubFolderModeType.ContentType:
+                        if (Svc.DutyState.ContentFinderCondition.IsValid)
+                        {
+                            folderName = Svc.DutyState.ContentFinderCondition.Value.ContentType.ToString();
+                            if (string.IsNullOrEmpty(folderName)) folderName = "未知副本类型";
+                        }
+                        else
+                        {
+                            folderName = "未知副本类型";
+                        }
+                        break;
+                    case SubFolderModeType.Territory:
+                        var terrName = Svc.DataManager.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Map.Value.PlaceName.Value.Name.ToString();
+                        if (string.IsNullOrEmpty(terrName)) terrName = "未知地区";
+                        folderName = terrName;
+                        break;
+                    default: break;
                 }
 
-                curDir = Path.Combine(curDir, folderName);
+                if (folderName != null)
+                {
+                    curDir = Path.Combine(curDir, folderName);
+                }
             }
 
             if (!Directory.Exists(curDir))

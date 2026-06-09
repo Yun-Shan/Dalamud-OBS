@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace OBSPlugin.Window
 {
-    internal enum CheckboxStatus
+    public enum CheckboxStatus
     {
         Unchecked = 0,
         Checked = 1,
@@ -16,7 +16,7 @@ namespace OBSPlugin.Window
 
         public static bool Checkbox(ImU8String label, ref CheckboxStatus status)
         {
-            const int boxGap = 2;
+            const int boxGap = 4;
             bool ret;
 
             if (status == CheckboxStatus.Indeterminate)

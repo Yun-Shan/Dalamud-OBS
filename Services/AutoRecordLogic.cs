@@ -3,6 +3,7 @@ using OBSPlugin.Objects;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -91,11 +92,20 @@ namespace OBSPlugin
                         {
                             _cts.Cancel();
                         }
-                        else
+                        else if (_obsConnection.ObsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED)
                         {
-                            Svc.PluginLog.Information("Auto start recording");
-                            this._setRecordingDir();
-                            StartRecordingWithReplayBuffer();
+                            var canStart = true;
+                            if (_config.UseDutyFilter)
+                            {
+                                var content = Svc.DutyState.ContentFinderCondition;
+                                canStart = content.IsValid && _config.FilterDuty.Contains(content.RowId);
+                            }
+                            if (canStart)
+                            {
+                                Svc.PluginLog.Information("Auto start recording");
+                                this._setRecordingDir();
+                                StartRecordingWithReplayBuffer();
+                            }
                         }
                     }
                     catch (Exception err)
@@ -143,15 +153,24 @@ namespace OBSPlugin
                 // Countdown started (CountingDown became true)
                 if (this._combatState.CountingDown && _config.StartRecordOnCountDown && _obsConnection.ObsRecordStatus == OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED)
                 {
-                    try
+                    var canStart = true;
+                    if (_config.UseDutyFilter)
                     {
-                        Svc.PluginLog.Information("Countdown started - auto start recording");
-                        this._setRecordingDir();
-                        StartRecordingWithReplayBuffer();
+                        var content = Svc.DutyState.ContentFinderCondition;
+                        canStart = content.IsValid && _config.FilterDuty.Contains(content.RowId);
                     }
-                    catch (Exception err)
+                    if (canStart)
                     {
-                        Svc.PluginLog.Warning("Failed to start recording on countdown: {0}", err.Message);
+                        try
+                        {
+                            Svc.PluginLog.Information("Countdown started - auto start recording");
+                            this._setRecordingDir();
+                            StartRecordingWithReplayBuffer();
+                        }
+                        catch (Exception err)
+                        {
+                            Svc.PluginLog.Warning("Failed to start recording on countdown: {0}", err.Message);
+                        }
                     }
                 }
                 // Countdown stopped (CountingDown became false)
@@ -163,7 +182,8 @@ namespace OBSPlugin
                         try
                         {
                             Svc.PluginLog.Information("Countdown canceled - auto stop recording");
-                            _obsConnection.OBS.StopRecord();
+                            var path = _obsConnection.OBS.StopRecord();
+                            File.Delete(path);
                         }
                         catch (ErrorResponseException err)
                         {
@@ -225,7 +245,59 @@ namespace OBSPlugin
                 } while (delay > 0 || (_config.DontStopInCutscene && isViewingCutScene));
 
                 Svc.PluginLog.Information("Auto stop recording");
-                _obsConnection.OBS.StopRecord();
+                var path = _obsConnection.OBS.StopRecord();
+                if (_config.FileNameMode != Configuration.FileNameModeType.None)
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(path);
+                    var fileExt = Path.GetExtension(path);
+                    if (_config.FileNameMode == Configuration.FileNameModeType.ContentNamePrefix || _config.FileNameMode == Configuration.FileNameModeType.ContentNameSuffix)
+                    {
+                        string dutyName;
+                        if (Svc.DutyState.ContentFinderCondition.IsValid)
+                        {
+                            dutyName = Svc.DutyState.ContentFinderCondition.Value.Name.ToString();
+                            if (string.IsNullOrEmpty(dutyName)) dutyName = "未知副本";
+                        }
+                        else
+                        {
+                            dutyName = "未知副本";
+                        }
+                        if (_config.FileNameMode == Configuration.FileNameModeType.ContentNamePrefix)
+                        {
+                            fileName = $"{dutyName}_{fileName}";
+                        }
+                        else
+                        {
+                            fileName = $"{fileName}_{dutyName}";
+                        }
+                    }
+                    else if (_config.FileNameMode == Configuration.FileNameModeType.TerritoryPrefix || _config.FileNameMode == Configuration.FileNameModeType.TerritorySuffix)
+                    {
+                        var terrName = Svc.DataManager.GetExcelSheet<Lumina.Excel.Sheets.TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Map.Value.PlaceName.Value.Name.ToString();
+                        if (string.IsNullOrEmpty(terrName)) terrName = "未知地区";
+                        if (_config.FileNameMode == Configuration.FileNameModeType.TerritoryPrefix)
+                        {
+                            fileName = $"{terrName}_{fileName}";
+                        }
+                        else
+                        {
+                            fileName = $"{fileName}_{terrName}";
+                        }
+                    }
+
+                    var tryCounter = 15;
+                    while (tryCounter-- > 0)
+                    {
+                        try
+                        {
+                            await Task.Delay(1000);
+                            File.Move(path, Path.Combine(Path.GetDirectoryName(path)!, $"{fileName}.{fileExt}"));
+                            break;
+                        }
+                        catch {}
+
+                    }
+                }
             }
             catch (ErrorResponseException err)
             {

@@ -1,10 +1,9 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using OBSPlugin.Services;
-using Lumina.Excel.Sheets;
+using OBSPlugin.Window;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace OBSPlugin
 {
@@ -14,7 +13,7 @@ namespace OBSPlugin
 
         private string _lastDutyEvent = "";
         private DateTime _lastDutyEventTime = DateTime.MinValue;
-        private OrderedDictionary<string, OrderedDictionary<string, List<Services.ContentEntry>>> _debugDutyTree = new();
+        private DutyTreeNode _debugDutyTreeRoot;
         private bool _debugDutyTreeCached = false;
 
         public DebugTab(Configuration config)
@@ -50,7 +49,7 @@ namespace OBSPlugin
         private void CacheDutyTree()
         {
             if (_debugDutyTreeCached) return;
-            _debugDutyTree = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
+            _debugDutyTreeRoot = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
             _debugDutyTreeCached = true;
         }
 
@@ -100,27 +99,27 @@ namespace OBSPlugin
 
             ImGui.Separator();
 
-            foreach (var contentType in _debugDutyTree)
+            foreach (var contentTypeNode in _debugDutyTreeRoot.Children)
             {
-                if (ImGui.TreeNode(contentType.Key))
+                if (ImGui.TreeNode(contentTypeNode.Name))
                 {
-                    var onlyUnknownCategory = contentType.Value.Count == 1 && contentType.Value.ContainsKey("未知");
+                    var onlyUnknownCategory = contentTypeNode.Children.Count == 1 && contentTypeNode.Children[0].Name == "未知";
                     if (onlyUnknownCategory)
                     {
-                        foreach (var entry in contentType.Value["未知"])
+                        foreach (var entryNode in contentTypeNode.Children[0].Children)
                         {
-                            ImGui.Text(entry.Name);
+                            ImGui.Text(entryNode.Name);
                         }
                     }
                     else
                     {
-                        foreach (var uiCategory in contentType.Value)
+                        foreach (var uiCategoryNode in contentTypeNode.Children)
                         {
-                            if (ImGui.TreeNode(uiCategory.Key))
+                            if (ImGui.TreeNode(uiCategoryNode.Name))
                             {
-                                foreach (var entry in uiCategory.Value)
+                                foreach (var entryNode in uiCategoryNode.Children)
                                 {
-                                    ImGui.Text(entry.Name);
+                                    ImGui.Text(entryNode.Name);
                                 }
                                 ImGui.TreePop();
                             }
