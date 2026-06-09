@@ -1,7 +1,6 @@
+using System.Collections.Generic;
 using Dalamud.Configuration;
-using Dalamud.Plugin;
 using Newtonsoft.Json;
-using OBSPlugin.Services;
 using System;
 
 namespace OBSPlugin
@@ -51,7 +50,7 @@ namespace OBSPlugin
         public bool DontStopInCutscene = true;
         public SubFolderModeType SubFolderMode = SubFolderModeType.Territory;
         public FileNameModeType FileNameMode = FileNameModeType.TerritorySuffix;
-        public BitSet SelectedContents = new(0);
+        public HashSet<uint> SelectedContents = new();
         public bool ShowAllFilters = false;
         #endregion
 
@@ -88,11 +87,5 @@ namespace OBSPlugin
             TerritoryPrefix = 4,
         }
 
-        public enum TriState
-        {
-            Unchecked = 0,
-            Checked = 1,
-            Indeterminate = -1,
         }
-    }
 }
