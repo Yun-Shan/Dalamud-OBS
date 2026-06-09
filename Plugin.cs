@@ -1,30 +1,15 @@
-using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using FFXIVClientStructs.FFXIV.Client.Game.Fate;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using Lumina.Excel.Sheets;
 using OBSPlugin.Attributes;
 using OBSPlugin.Objects;
-using OBSWebsocketDotNet;
-using OBSWebsocketDotNet.Communication;
-using OBSWebsocketDotNet.Types;
-using OBSWebsocketDotNet.Types.Events;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using static FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.Delegates;
 
 namespace OBSPlugin
 {
     public class Plugin : IDalamudPlugin
     {
         // Only PluginInterface stays here
+        [PluginService]
         internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
 
         internal Configuration config { get; private set; }

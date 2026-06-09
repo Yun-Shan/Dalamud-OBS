@@ -92,7 +92,7 @@ namespace OBSPlugin
         {
             Unchecked = 0,
             Checked = 1,
-            Indeterminate = 2,
+            Indeterminate = -1,
         }
     }
 }

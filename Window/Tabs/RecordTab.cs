@@ -1,6 +1,8 @@
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using OBSPlugin.Services;
+using OBSPlugin.Window;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
@@ -143,7 +145,6 @@ namespace OBSPlugin
                 }
                 ImGui.EndCombo();
             }
-
             // 文件名
             ImGui.Text("文件名");
             ImGui.SameLine(100);
@@ -174,16 +175,15 @@ namespace OBSPlugin
             if (ImGui.Checkbox("倒计时取消时停止录制", ref _config.StopRecordOnCountDownCancel))
                 _config.Save();
 
-            if (ImGui.CollapsingHeader("录制筛选"))
+            var enableFilter = true;
+            if (ImGui.Checkbox("启用筛选", ref enableFilter))
+                _config.Save();
+            if (enableFilter && ImGui.CollapsingHeader("录制筛选"))
             {
-                ImGui.Indent();
-
                 if (ImGui.Checkbox("显示所有筛选", ref _config.ShowAllFilters))
                     _config.Save();
 
                 DrawContentTree();
-
-                ImGui.Unindent();
             }
         }
 
@@ -191,74 +191,33 @@ namespace OBSPlugin
         {
             foreach (var l1 in _dutyTree)
             {
-                bool isToggleable = l1.Key != "副本" && l1.Key != "多人内容";
+                bool isToggleable = l1.Key != "大型任务" && l1.Key != "绝境战";
                 if (isToggleable && !_config.ShowAllFilters)
                     continue;
 
-                ImGui.Indent();
-
                 // L1 tri-state checkbox
-                var l1State = GetL1State(l1.Key);
-                bool l1CheckboxValue = l1State == Configuration.TriState.Checked;
+                var l1State = (int)GetL1State(l1.Key);
                 string l1CheckboxId = $"##l1_{l1.Key}";
-
-                // For indeterminate, draw a special checkbox with a bullet
-                if (l1State == Configuration.TriState.Indeterminate)
+                if (UiHelper.Checkbox(l1CheckboxId, ref l1State))
                 {
-                    // Draw checkbox with mixed state indicator
-                    ImGui.Checkbox(l1CheckboxId, ref l1CheckboxValue);
-                    ImGui.SameLine();
-                    ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "[部分]");
-
-                    // Handle click on the partial indicator to cycle through states
-                    if (ImGui.IsItemClicked())
-                    {
-                        CascadeL1State(l1.Key, true);  // Set all to checked
-                        _config.Save();
-                    }
+                    CascadeL1State(l1.Key, (Configuration.TriState)l1State != Configuration.TriState.Unchecked);
+                    _config.Save();
                 }
-                else
-                {
-                    if (ImGui.Checkbox(l1CheckboxId, ref l1CheckboxValue))
-                    {
-                        CascadeL1State(l1.Key, l1CheckboxValue);
-                        _config.Save();
-                    }
-                    ImGui.SameLine();
-                }
+                ImGui.SameLine();
 
                 if (ImGui.TreeNode(l1.Key))
                 {
                     foreach (var l2 in l1.Value)
                     {
-                        ImGui.Indent();
-
                         // L2 tri-state checkbox
-                        var l2State = GetL2State(l1.Key, l2.Key);
-                        bool l2CheckboxValue = l2State == Configuration.TriState.Checked;
+                        var l2State = (int)GetL2State(l1.Key, l2.Key);
                         string l2CheckboxId = $"##l2_{l1.Key}_{l2.Key}";
-
-                        if (l2State == Configuration.TriState.Indeterminate)
+                        if (UiHelper.Checkbox(l2CheckboxId, ref l2State))
                         {
-                            ImGui.Checkbox(l2CheckboxId, ref l2CheckboxValue);
-                            ImGui.SameLine();
-                            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "[部分]");
-
-                            if (ImGui.IsItemClicked())
-                            {
-                                CascadeL2State(l1.Key, l2.Key, true);
-                                _config.Save();
-                            }
+                            CascadeL1State(l1.Key, (Configuration.TriState)l2State != Configuration.TriState.Unchecked);
+                            _config.Save();
                         }
-                        else
-                        {
-                            if (ImGui.Checkbox(l2CheckboxId, ref l2CheckboxValue))
-                            {
-                                CascadeL2State(l1.Key, l2.Key, l2CheckboxValue);
-                                _config.Save();
-                            }
-                            ImGui.SameLine();
-                        }
+                        ImGui.SameLine();
 
                         if (ImGui.TreeNode(l2.Key))
                         {
@@ -273,11 +232,9 @@ namespace OBSPlugin
                             }
                             ImGui.TreePop();
                         }
-                        ImGui.Unindent();
                     }
                     ImGui.TreePop();
                 }
-                ImGui.Unindent();
             }
         }
 
