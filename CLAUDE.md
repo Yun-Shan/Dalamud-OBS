@@ -60,12 +60,14 @@ public void ObsCommand(string command, string args) { ... }
 
 **OBS通信**：使用 `lib/obs-websocket-dotnet` 子模块中的 `OBSWebsocket`。
 
+**约束：禁止修改 `lib/obs-websocket-dotnet` 子模块**。该子模块为外部依赖，仅通过 git submodule引用。如需修改OBS协议行为，应在包装层（`Services/ObsService.cs` 或类似）进行，而非直接修改子模块。
+
 ### OBS WebSocket 事件
 
 `Plugin.cs` 订阅： `Connected`、`Disconnected`、`StreamStateChanged`、`RecordStateChanged`、`ReplayBufferStateChanged`。
 
 ## 依赖
 
-- `lib/obs-websocket-dotnet/obs-websocket-dotnet/obs-websocket-dotnet.csproj` — OBS WebSocket 协议客户端
+- `lib/obs-websocket-dotnet/obs-websocket-dotnet/obs-websocket-dotnet.csproj` — OBS WebSocket 协议客户端（**禁止修改子模块内容**）
 - Dalamud SDK 包（通过 Dalamud.NET.Sdk 引入）
 - FFXIVClientStructs 用于访问游戏结构体
