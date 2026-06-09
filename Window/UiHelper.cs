@@ -1,23 +1,30 @@
 ﻿using Dalamud.Bindings.ImGui;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace OBSPlugin.Window
 {
+    internal enum CheckboxStatus
+    {
+        Unchecked = 0,
+        Checked = 1,
+        Indeterminate = -1
+    }
+
     internal class UiHelper
     {
         private static readonly uint checkBoxIntermediateColor = ImGui.ColorConvertFloat4ToU32(new Vector4(0.7f, 0.7f, 0.7f, 1f));
-        public static bool Checkbox(ImU8String label, ref int val)
+
+        public static bool Checkbox(ImU8String label, ref CheckboxStatus status)
         {
             const int boxGap = 2;
             bool ret;
-            if (val == -1)
+
+            if (status == CheckboxStatus.Indeterminate)
             {
                 bool b = false;
                 ret = ImGui.Checkbox(label, ref b);
-                if (ret) val = 1;
+                if (ret) status = CheckboxStatus.Checked;
+
                 var itemMin = ImGui.GetItemRectMin();
                 itemMin.X += boxGap;
                 itemMin.Y += boxGap;
@@ -28,10 +35,11 @@ namespace OBSPlugin.Window
             }
             else
             {
-                bool b = val != 0;
+                bool b = status == CheckboxStatus.Checked;
                 ret = ImGui.Checkbox(label, ref b);
-                if (ret) val = b ? 1 : 0;
+                if (ret) status = b ? CheckboxStatus.Checked : CheckboxStatus.Unchecked;
             }
+
             return ret;
         }
     }
