@@ -14,7 +14,6 @@ namespace OBSPlugin
     public class RecordTab
     {
         private readonly OrderedDictionary<string, OrderedDictionary<string, List<ContentEntry>>> _dutyTree;
-        private readonly Dictionary<string, (int StartIndex, int Count)> _bitRanges;
 
         private readonly Configuration _config;
         private readonly ObsConnection _obsConnection;
@@ -27,33 +26,32 @@ namespace OBSPlugin
             _setRecordingDir = setRecordingDir;
 
             _dutyTree = ContentFinderConditionExtensions.BuildDutyTree(Svc.DataManager);
-            _bitRanges = new Dictionary<string, (int, int)>();
+        }
 
-            foreach (var l1 in _dutyTree)
+        private CheckboxStatus GetL2State(string l1Key, string l2Key)
+        {
+            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return CheckboxStatus.Unchecked;
+            if (!l2Dict.TryGetValue(l2Key, out var entries)) return CheckboxStatus.Unchecked;
+
+            bool hasChecked = false;
+            bool hasUnchecked = false;
+
+            foreach (var entry in entries)
             {
-                foreach (var l2 in l1.Value)
-                {
-                    if (l2.Value.Count > 0)
-                    {
-                        uint firstRowId = l2.Value[0].RowId;
-                        _bitRanges[$"{l1.Key}/{l2.Key}"] = ((int)firstRowId, l2.Value.Count);
-                    }
-                }
+                if (_config.SelectedContents.Contains(entry.RowId))
+                    hasChecked = true;
+                else
+                    hasUnchecked = true;
+
+                if (hasChecked && hasUnchecked) return CheckboxStatus.Indeterminate;
             }
+
+            return hasChecked ? CheckboxStatus.Checked : CheckboxStatus.Unchecked;
         }
 
-        private Configuration.TriState GetL2State(string l1Key, string l2Key)
+        private CheckboxStatus GetL1State(string l1Key)
         {
-            if (!_bitRanges.TryGetValue($"{l1Key}/{l2Key}", out var range)) return Configuration.TriState.Unchecked;
-            int count = _config.SelectedContents.CountRange(range.StartIndex, range.Count);
-            if (count == 0) return Configuration.TriState.Unchecked;
-            if (count == range.Count) return Configuration.TriState.Checked;
-            return Configuration.TriState.Indeterminate;
-        }
-
-        private Configuration.TriState GetL1State(string l1Key)
-        {
-            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return Configuration.TriState.Unchecked;
+            if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return CheckboxStatus.Unchecked;
 
             bool hasChecked = false;
             bool hasUnchecked = false;
@@ -61,19 +59,18 @@ namespace OBSPlugin
             foreach (var l2 in l2Dict)
             {
                 var state = GetL2State(l1Key, l2.Key);
-                if (state == Configuration.TriState.Checked) hasChecked = true;
-                if (state == Configuration.TriState.Unchecked) hasUnchecked = true;
-                if (hasChecked && hasUnchecked) return Configuration.TriState.Indeterminate;
+                if (state == CheckboxStatus.Checked) hasChecked = true;
+                if (state == CheckboxStatus.Unchecked) hasUnchecked = true;
+                if (hasChecked && hasUnchecked) return CheckboxStatus.Indeterminate;
             }
 
-            if (hasChecked && !hasUnchecked) return Configuration.TriState.Checked;
-            if (!hasChecked && hasUnchecked) return Configuration.TriState.Unchecked;
-            return Configuration.TriState.Indeterminate;
+            if (hasChecked && !hasUnchecked) return CheckboxStatus.Checked;
+            if (!hasChecked && hasUnchecked) return CheckboxStatus.Unchecked;
+            return CheckboxStatus.Indeterminate;
         }
 
         public void Draw()
         {
-            // Recording control button + status
             string obsButtonText;
 
             switch (_obsConnection.ObsRecordStatus)
@@ -81,19 +78,15 @@ namespace OBSPlugin
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTING:
                     obsButtonText = "录制开始中...";
                     break;
-
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STARTED:
                     obsButtonText = "停止录制";
                     break;
-
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPING:
                     obsButtonText = "录制停止中...";
                     break;
-
                 case OutputState.OBS_WEBSOCKET_OUTPUT_STOPPED:
                     obsButtonText = "开始录制";
                     break;
-
                 default:
                     obsButtonText = "状态未知";
                     break;
@@ -130,7 +123,6 @@ namespace OBSPlugin
         {
             ImGui.TextColored(new Vector4(0.54f, 0.71f, 0.97f, 1f), "录制文件");
 
-            // 子文件夹
             ImGui.Text("子文件夹");
             ImGui.SameLine(100);
             if (ImGui.BeginCombo("##SubFolderMode", _config.SubFolderMode.ToString()))
@@ -145,7 +137,7 @@ namespace OBSPlugin
                 }
                 ImGui.EndCombo();
             }
-            // 文件名
+
             ImGui.Text("文件名");
             ImGui.SameLine(100);
             if (ImGui.BeginCombo("##FileNameMode", _config.FileNameMode.ToString()))
@@ -195,12 +187,11 @@ namespace OBSPlugin
                 if (isToggleable && !_config.ShowAllFilters)
                     continue;
 
-                // L1 tri-state checkbox
-                var l1State = (int)GetL1State(l1.Key);
+                var l1State = GetL1State(l1.Key);
                 string l1CheckboxId = $"##l1_{l1.Key}";
                 if (UiHelper.Checkbox(l1CheckboxId, ref l1State))
                 {
-                    CascadeL1State(l1.Key, (Configuration.TriState)l1State != Configuration.TriState.Unchecked);
+                    CascadeL1State(l1.Key, l1State != CheckboxStatus.Checked);
                     _config.Save();
                 }
                 ImGui.SameLine();
@@ -209,12 +200,11 @@ namespace OBSPlugin
                 {
                     foreach (var l2 in l1.Value)
                     {
-                        // L2 tri-state checkbox
-                        var l2State = (int)GetL2State(l1.Key, l2.Key);
+                        var l2State = GetL2State(l1.Key, l2.Key);
                         string l2CheckboxId = $"##l2_{l1.Key}_{l2.Key}";
                         if (UiHelper.Checkbox(l2CheckboxId, ref l2State))
                         {
-                            CascadeL1State(l1.Key, (Configuration.TriState)l2State != Configuration.TriState.Unchecked);
+                            CascadeL2State(l1.Key, l2.Key, l2State != CheckboxStatus.Checked);
                             _config.Save();
                         }
                         ImGui.SameLine();
@@ -223,10 +213,13 @@ namespace OBSPlugin
                         {
                             foreach (var entry in l2.Value)
                             {
-                                bool selected = _config.SelectedContents.Get((int)entry.RowId);
+                                bool selected = _config.SelectedContents.Contains(entry.RowId);
                                 if (ImGui.Checkbox(entry.Name, ref selected))
                                 {
-                                    _config.SelectedContents.Set((int)entry.RowId, selected);
+                                    if (selected)
+                                        _config.SelectedContents.Add(entry.RowId);
+                                    else
+                                        _config.SelectedContents.Remove(entry.RowId);
                                     _config.Save();
                                 }
                             }
@@ -238,22 +231,29 @@ namespace OBSPlugin
             }
         }
 
-        private void CascadeL1State(string l1Key, bool checked_)
+        private void CascadeL1State(string l1Key, bool check)
         {
             if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
             foreach (var l2 in l2Dict)
             {
-                CascadeL2State(l1Key, l2.Key, checked_);
+                CascadeL2State(l1Key, l2.Key, check);
             }
         }
 
-        private void CascadeL2State(string l1Key, string l2Key, bool checked_)
+        private void CascadeL2State(string l1Key, string l2Key, bool check)
         {
             if (!_dutyTree.TryGetValue(l1Key, out var l2Dict)) return;
             if (!l2Dict.TryGetValue(l2Key, out var entries)) return;
-            foreach (var entry in entries)
+
+            if (check)
             {
-                _config.SelectedContents.Set((int)entry.RowId, checked_);
+                foreach (var entry in entries)
+                    _config.SelectedContents.Add(entry.RowId);
+            }
+            else
+            {
+                foreach (var entry in entries)
+                    _config.SelectedContents.Remove(entry.RowId);
             }
         }
 
