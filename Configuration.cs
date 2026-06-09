@@ -86,6 +86,5 @@ namespace OBSPlugin
             TerritorySuffix = 3,
             TerritoryPrefix = 4,
         }
-
-        }
+    }
 }
